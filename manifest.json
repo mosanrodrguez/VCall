@@ -1,0 +1,26 @@
+{
+  "name": "WebRTC Calls",
+  "short_name": "WebRTC Calls",
+  "description": "Aplicación de llamadas de voz y video en tiempo real usando WebRTC",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f1419",
+  "theme_color": "#3390ec",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "es",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "categories": ["communication", "social"]
+}
