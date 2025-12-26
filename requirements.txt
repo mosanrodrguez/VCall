@@ -1,6 +1,8 @@
 Flask
 aiohttp
 websockets
+aiohttp-cors
 aiosqlite
 PyJWT
 bcrypt
+pillow
