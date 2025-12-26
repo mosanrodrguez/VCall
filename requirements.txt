@@ -1,0 +1,6 @@
+Flask
+aiohttp
+websockets
+aiosqlite
+PyJWT
+bcrypt
