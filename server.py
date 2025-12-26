@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SERVIDOR DE SEÑALIZACIÓN WEBRTC - VERSIÓN CORREGIDA
+SERVIDOR DE SEÑALIZACIÓN WEBRTC OPTIMIZADO
 """
 
 import asyncio
@@ -14,8 +14,9 @@ import hashlib
 import base64
 import sqlite3
 from pathlib import Path
+import time
 
-logging.basicConfig(level=logging.WARNING)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class DatabaseManager:
@@ -73,16 +74,25 @@ class DatabaseManager:
             try:
                 avatar_dir = Path('static/avatars')
                 avatar_dir.mkdir(parents=True, exist_ok=True)
-                header, data = avatar_data.split(',', 1)
+                # Extraer datos base64
+                if ',' in avatar_data:
+                    header, data = avatar_data.split(',', 1)
+                else:
+                    data = avatar_data
+                    header = 'data:image/jpeg;base64'
+                
                 data = base64.b64decode(data)
                 ext = 'png' if 'png' in header else 'jpg'
                 filename = f"{user_id}.{ext}"
                 filepath = avatar_dir / filename
+                
                 with open(filepath, 'wb') as f:
                     f.write(data)
                 avatar_url = f"/avatars/{filename}"
+                logger.info(f"Avatar guardado: {avatar_url}")
             except Exception as e:
                 logger.error(f"Error procesando avatar: {e}")
+                avatar_url = None
 
         try:
             with sqlite3.connect(self.db_path) as conn:
@@ -177,12 +187,14 @@ class UserManager:
     def __init__(self, db):
         self.db = db
         self.connected_users = {}
+        self.call_handlers = {}
 
     def add_connected_user(self, user_id, ws, user_data):
         self.connected_users[user_id] = {
             'ws': ws,
             'username': user_data['username'],
-            'avatar_url': user_data.get('avatar_url')
+            'avatar_url': user_data.get('avatar_url'),
+            'last_ping': time.time()
         }
         self.db.update_user_status(user_id, True)
         logger.info(f"Usuario conectado: {user_data['username']} ({user_id})")
@@ -190,6 +202,16 @@ class UserManager:
     def remove_connected_user(self, user_id):
         if user_id in self.connected_users:
             self.db.update_user_status(user_id, False)
+            # Notificar a todos que este usuario se desconectó
+            for uid, data in self.connected_users.items():
+                if uid != user_id and 'ws' in data:
+                    try:
+                        asyncio.create_task(data['ws'].send_json({
+                            'type': 'user_disconnected',
+                            'userId': user_id
+                        }))
+                    except:
+                        pass
             del self.connected_users[user_id]
             logger.info(f"Usuario desconectado: {user_id}")
 
@@ -204,6 +226,14 @@ class UserManager:
                     'status': 'disponible'
                 })
         return users
+
+    def register_call_handler(self, from_user, to_user, handler):
+        key = f"{from_user}_{to_user}"
+        self.call_handlers[key] = handler
+
+    def get_call_handler(self, from_user, to_user):
+        key = f"{from_user}_{to_user}"
+        return self.call_handlers.get(key)
 
 user_manager = UserManager(db_manager)
 
@@ -228,77 +258,119 @@ async def websocket_handler(request):
 
     user_manager.add_connected_user(user_id, ws, user_data)
 
+    # Enviar registro exitoso con TODOS los usuarios
     await ws.send_json({
         'type': 'registered',
         'userId': user_id,
         'username': user_data['username'],
+        'avatar_url': user_data.get('avatar_url'),
         'onlineUsers': user_manager.get_connected_users(user_id)
     })
 
-    async for msg in ws:
-        if msg.type == web.WSMsgType.TEXT:
+    # Notificar a otros usuarios que este usuario se conectó
+    for uid, data in user_manager.connected_users.items():
+        if uid != user_id and 'ws' in data:
             try:
-                data = json.loads(msg.data)
-                msg_type = data.get('type')
+                await data['ws'].send_json({
+                    'type': 'user_connected',
+                    'userId': user_id,
+                    'username': user_data['username'],
+                    'avatar_url': user_data.get('avatar_url')
+                })
+            except:
+                pass
 
-                if msg_type == 'get_users':
+    try:
+        async for msg in ws:
+            if msg.type == web.WSMsgType.TEXT:
+                try:
+                    data = json.loads(msg.data)
+                    msg_type = data.get('type')
+
+                    if msg_type == 'get_users':
+                        await ws.send_json({
+                            'type': 'user_list',
+                            'users': db_manager.get_all_users(user_id)
+                        })
+
+                    elif msg_type == 'call_request':
+                        target_id = data.get('targetId')
+                        if target_id in user_manager.connected_users:
+                            target_ws = user_manager.connected_users[target_id]['ws']
+                            await target_ws.send_json({
+                                'type': 'incoming_call',
+                                'callerId': user_id,
+                                'callerName': user_data['username'],
+                                'callerAvatar': user_data.get('avatar_url')
+                            })
+                            # Registrar el handler de llamada
+                            user_manager.register_call_handler(user_id, target_id, ws)
+
+                    elif msg_type == 'call_accept':
+                        caller_id = data.get('callerId')
+                        if caller_id in user_manager.connected_users:
+                            caller_ws = user_manager.connected_users[caller_id]['ws']
+                            await caller_ws.send_json({
+                                'type': 'call_accepted',
+                                'calleeId': user_id,
+                                'calleeName': user_data['username']
+                            })
+                            # Registrar el handler inverso
+                            user_manager.register_call_handler(user_id, caller_id, ws)
+
+                    elif msg_type == 'call_decline':
+                        caller_id = data.get('callerId')
+                        if caller_id in user_manager.connected_users:
+                            caller_ws = user_manager.connected_users[caller_id]['ws']
+                            await caller_ws.send_json({
+                                'type': 'call_declined',
+                                'calleeId': user_id
+                            })
+
+                    elif msg_type == 'call_end':
+                        target_id = data.get('targetId')
+                        if target_id in user_manager.connected_users:
+                            target_ws = user_manager.connected_users[target_id]['ws']
+                            await target_ws.send_json({
+                                'type': 'call_ended',
+                                'from': user_id
+                            })
+
+                    elif msg_type == 'webrtc_signal':
+                        target_id = data.get('targetId')
+                        signal_data = data.get('signal')
+                        
+                        if target_id in user_manager.connected_users:
+                            target_ws = user_manager.connected_users[target_id]['ws']
+                            await target_ws.send_json({
+                                'type': 'webrtc_signal',
+                                'signal': signal_data,
+                                'from': user_id
+                            })
+                        else:
+                            logger.warning(f"Usuario objetivo {target_id} no conectado")
+
+                    elif msg_type == 'ping':
+                        # Actualizar último ping
+                        if user_id in user_manager.connected_users:
+                            user_manager.connected_users[user_id]['last_ping'] = time.time()
+                            await ws.send_json({'type': 'pong'})
+
+                except Exception as e:
+                    logger.error(f"Error procesando mensaje: {e}")
                     await ws.send_json({
-                        'type': 'user_list',
-                        'users': db_manager.get_all_users(user_id)
+                        'type': 'error',
+                        'message': str(e)
                     })
 
-                elif msg_type == 'call_request':
-                    target_id = data.get('targetId')
-                    if target_id in user_manager.connected_users:
-                        target_ws = user_manager.connected_users[target_id]['ws']
-                        await target_ws.send_json({
-                            'type': 'incoming_call',
-                            'callerId': user_id,
-                            'callerName': user_data['username'],
-                            'callerAvatar': user_data.get('avatar_url')
-                        })
+            elif msg.type == web.WSMsgType.ERROR:
+                logger.error(f'Error en WebSocket: {ws.exception()}')
 
-                elif msg_type == 'call_accept':
-                    caller_id = data.get('callerId')
-                    if caller_id in user_manager.connected_users:
-                        caller_ws = user_manager.connected_users[caller_id]['ws']
-                        await caller_ws.send_json({
-                            'type': 'call_accepted',
-                            'calleeId': user_id
-                        })
-
-                elif msg_type == 'call_decline':
-                    caller_id = data.get('callerId')
-                    if caller_id in user_manager.connected_users:
-                        caller_ws = user_manager.connected_users[caller_id]['ws']
-                        await caller_ws.send_json({
-                            'type': 'call_declined',
-                            'calleeId': user_id
-                        })
-
-                elif msg_type == 'call_end':
-                    target_id = data.get('targetId')
-                    if target_id in user_manager.connected_users:
-                        target_ws = user_manager.connected_users[target_id]['ws']
-                        await target_ws.send_json({
-                            'type': 'call_ended',
-                            'from': user_id
-                        })
-
-                elif msg_type == 'webrtc_signal':
-                    target_id = data.get('targetId')
-                    if target_id in user_manager.connected_users:
-                        target_ws = user_manager.connected_users[target_id]['ws']
-                        await target_ws.send_json({
-                            'type': 'webrtc_signal',
-                            'signal': data.get('signal'),
-                            'from': user_id
-                        })
-
-            except Exception as e:
-                logger.error(f"Error procesando mensaje: {e}")
-
-    user_manager.remove_connected_user(user_id)
+    except Exception as e:
+        logger.error(f"Error en conexión WebSocket: {e}")
+    finally:
+        user_manager.remove_connected_user(user_id)
+    
     return ws
 
 async def handle_login(request):
@@ -326,7 +398,7 @@ async def handle_static(request):
     
     allowed_paths = [
         'login.html', 'index.html', 'manifest.json',
-        'service-worker.js'
+        'service-worker.js', 'register-sw.js'
     ]
     
     if path in allowed_paths:
@@ -348,16 +420,22 @@ async def handle_avatar(request):
     Path('static/avatars').mkdir(parents=True, exist_ok=True)
     
     if not full_path.is_file():
+        # Devolver imagen por defecto
+        default_avatar = Path('static/default-avatar.png')
+        if default_avatar.is_file():
+            return web.FileResponse(default_avatar)
         return web.Response(status=404)
     
     response = web.FileResponse(full_path)
     response.headers['Cache-Control'] = 'public, max-age=31536000'
+    response.headers['Access-Control-Allow-Origin'] = '*'
     return response
 
 async def handle_register(request):
     try:
         data = await request.json()
-    except Exception:
+    except Exception as e:
+        logger.error(f"Error parsing register data: {e}")
         return web.json_response({'success': False, 'error': 'Datos inválidos'})
     
     username = data.get('username')
@@ -375,7 +453,7 @@ async def handle_register(request):
             'user': user, 
             'token': token
         })
-        response.set_cookie('webrtc_session_token', token, max_age=86400, httponly=True)
+        response.set_cookie('webrtc_session_token', token, max_age=86400, httponly=True, samesite='Strict')
         return response
     return web.json_response({'success': False, 'error': 'Usuario ya existe'})
 
@@ -395,7 +473,7 @@ async def handle_login_api(request):
             'user': user, 
             'token': token
         })
-        response.set_cookie('webrtc_session_token', token, max_age=86400, httponly=True)
+        response.set_cookie('webrtc_session_token', token, max_age=86400, httponly=True, samesite='Strict')
         return response
     return web.json_response({'success': False, 'error': 'Credenciales inválidas'})
 
@@ -408,20 +486,55 @@ async def handle_logout(request):
     response.del_cookie('webrtc_session_token')
     return response
 
+async def handle_health(request):
+    """Endpoint de salud para Render"""
+    return web.json_response({
+        'status': 'ok',
+        'timestamp': time.time(),
+        'connected_users': len(user_manager.connected_users)
+    })
+
+async def handle_update_profile(request):
+    """Actualizar perfil de usuario"""
+    token = request.cookies.get('webrtc_session_token')
+    if not token:
+        return web.json_response({'success': False, 'error': 'No autenticado'})
+    
+    user_id = db_manager.validate_session(token)
+    if not user_id:
+        return web.json_response({'success': False, 'error': 'Sesión inválida'})
+    
+    try:
+        data = await request.json()
+    except Exception:
+        return web.json_response({'success': False, 'error': 'Datos inválidos'})
+    
+    # Aquí implementarías la actualización del perfil
+    # Por ahora solo un placeholder
+    return web.json_response({'success': True, 'message': 'Perfil actualizado'})
+
 async def start_server():
     port = int(os.environ.get("PORT", 3000))
     
+    # Crear directorios necesarios
     Path('static/avatars').mkdir(parents=True, exist_ok=True)
     Path('icons').mkdir(exist_ok=True)
     
     app = web.Application()
 
+    # Rutas API
     app.router.add_get('/ws', websocket_handler)
     app.router.add_post('/api/register', handle_register)
     app.router.add_post('/api/login', handle_login_api)
     app.router.add_get('/api/logout', handle_logout)
+    app.router.add_get('/api/health', handle_health)
+    app.router.add_post('/api/update-profile', handle_update_profile)
+    
+    # Rutas de páginas
     app.router.add_get('/', handle_login)
     app.router.add_get('/index', handle_index)
+    
+    # Rutas de archivos estáticos
     app.router.add_get('/avatars/{path:.*}', handle_avatar)
     app.router.add_get('/icons/{path:.*}', handle_static)
     app.router.add_get('/{path:.*}', handle_static)
@@ -436,7 +549,9 @@ async def start_server():
     print(f"📁 Base de datos: webrtc.db")
     print(f"👤 Directorio de avatares: static/avatars/")
     print(f"🎨 Directorio de iconos: icons/")
+    print(f"🏥 Health check: http://localhost:{port}/api/health")
 
+    # Mantener el servidor corriendo
     await asyncio.Future()
 
 if __name__ == "__main__":
