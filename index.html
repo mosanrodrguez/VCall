@@ -1,0 +1,1535 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Llamadas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.1/simplepeer.min.js"></script>
+    
+    <!-- Metatags para PWA -->
+    <meta name="application-name" content="WebRTC Calls">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="WebRTC Calls">
+    <meta name="description" content="Aplicación de llamadas de voz y video en tiempo real">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="msapplication-TileColor" content="#3390ec">
+    <meta name="msapplication-tap-highlight" content="no">
+    <meta name="theme-color" content="#3390ec">
+
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="/icons/icon-180.png">
+    
+    <!-- Android icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png">
+    
+    <!-- Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <style>
+        :root {
+            --bg: #0f1419;
+            --surface: #1c252b;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b8c0;
+            --accent: #3390ec;
+            --success: #4caf50;
+            --danger: #f44336;
+            --border: #2f3a42;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Roboto', sans-serif; background: var(--bg); color: var(--text-primary); min-height: 100vh; }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--surface);
+            border-top: 4px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .app-header {
+            background: var(--surface);
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-title { font-size: 1.4rem; font-weight: 500; }
+
+        .my-avatar-container {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .my-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #5ba8f5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            color: white;
+            object-fit: cover;
+        }
+
+        .status-indicator {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--success);
+            border: 3px solid var(--surface);
+        }
+
+        .status-indicator.offline { background: var(--danger); }
+
+        .users-list { 
+            background: var(--bg); 
+            min-height: calc(100vh - 73px);
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .user-item:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .user-item.disabled { 
+            opacity: 0.6; 
+            cursor: default; 
+        }
+        
+        .user-item.disabled:hover { 
+            background-color: transparent; 
+        }
+
+        .user-avatar-small {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: white;
+            margin-right: 16px;
+            flex-shrink: 0;
+            object-fit: cover;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .user-avatar-small img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .user-info { flex: 1; }
+        .user-info h3 { 
+            font-size: 1.1rem; 
+            font-weight: 500; 
+            margin-bottom: 4px; 
+            color: var(--text-primary);
+        }
+        
+        .user-info p { 
+            font-size: 0.9rem; 
+            color: var(--text-secondary); 
+            display: flex; 
+            align-items: center; 
+            gap: 6px; 
+        }
+
+        .status-dot { 
+            width: 8px; 
+            height: 8px; 
+            border-radius: 50%; 
+            display: inline-block;
+        }
+
+        .status-dot.online { 
+            background: var(--success); 
+        }
+        
+        .status-dot.offline { 
+            background: var(--text-secondary); 
+        }
+
+        .call-action { 
+            color: var(--accent); 
+            font-size: 1.4rem; 
+        }
+        
+        .call-action.disabled { 
+            color: var(--text-secondary); 
+        }
+
+        .call-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 40px 20px 20px;
+        }
+
+        .call-overlay.active { 
+            display: flex; 
+        }
+
+        .call-top {
+            text-align: center;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .call-avatar-large {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            margin: 0 auto 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            font-weight: 700;
+            color: white;
+            object-fit: cover;
+            background: linear-gradient(135deg, var(--accent), #5ba8f5);
+            border: 4px solid var(--border);
+        }
+
+        .call-avatar-large img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .call-name { 
+            font-size: 1.8rem; 
+            font-weight: 500; 
+            margin-bottom: 8px; 
+            color: var(--text-primary);
+        }
+        
+        .call-status-text { 
+            font-size: 1.2rem; 
+            color: var(--text-secondary); 
+        }
+        
+        .timer { 
+            font-size: 3rem; 
+            font-weight: 500; 
+            margin: 20px 0; 
+            display: none; 
+            color: var(--success);
+        }
+        
+        .timer.active { 
+            display: block; 
+        }
+
+        .call-bottom {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            padding-bottom: 30px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .call-btn {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: var(--surface);
+            border: none;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .call-btn.end { 
+            background: var(--danger); 
+        }
+        
+        .call-btn.accept { 
+            background: var(--success); 
+        }
+
+        .video-container {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: none;
+            z-index: 1;
+            background: #000;
+        }
+
+        .video-container.active { 
+            display: block; 
+        }
+
+        .video-container video { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+            background: #000;
+        }
+
+        .flip-camera-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            color: var(--text-primary);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            cursor: pointer;
+            z-index: 1001;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .flip-camera-btn.active {
+            display: flex;
+        }
+
+        .video-preview {
+            position: fixed;
+            top: 90px;
+            right: 20px;
+            width: 160px;
+            height: 120px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 3px solid var(--accent);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            background: #000;
+            z-index: 1000;
+            display: none;
+        }
+
+        .video-preview.active {
+            display: block;
+        }
+
+        .video-preview video { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+        }
+
+        .toggle-camera-badge {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            backdrop-filter: blur(10px);
+            white-space: nowrap;
+            z-index: 10;
+        }
+
+        .profile-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, var(--bg), #1a1f2e);
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .profile-modal.active {
+            display: flex;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-top: 20px;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: var(--accent);
+            font-size: 1.8rem;
+            cursor: pointer;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .back-btn:hover {
+            background: rgba(51, 144, 236, 0.1);
+        }
+
+        .profile-title {
+            flex: 1;
+            text-align: center;
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .profile-avatar-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .profile-avatar-container {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            position: relative;
+            border: 4px solid var(--accent);
+            box-shadow: 0 10px 30px rgba(51, 144, 236, 0.3);
+            overflow: hidden;
+            background: var(--surface);
+        }
+
+        .profile-avatar-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+
+        .profile-avatar-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--accent), #5ba8f5);
+            color: white;
+            font-size: 3.5rem;
+            font-weight: 700;
+        }
+
+        .change-photo-btn {
+            background: linear-gradient(135deg, var(--accent), #5ba8f5);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .profile-form {
+            max-width: 500px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group label i {
+            color: var(--accent);
+            font-size: 1rem;
+        }
+
+        .profile-input {
+            width: 100%;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .profile-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(51, 144, 236, 0.2);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .password-container {
+            position: relative;
+        }
+
+        .toggle-password-btn {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px;
+            font-size: 1.1rem;
+            z-index: 2;
+        }
+
+        .toggle-password-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .form-note {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-top: 6px;
+            display: block;
+        }
+
+        .profile-actions {
+            display: flex;
+            gap: 16px;
+            margin-top: 40px;
+        }
+
+        .save-btn {
+            flex: 1;
+            padding: 18px;
+            background: linear-gradient(135deg, #4caf50, #45a049);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .save-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .logout-btn {
+            padding: 18px 28px;
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .notification-toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--surface);
+            color: var(--text-primary);
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1001;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+        }
+
+        .notification-toast.show { 
+            opacity: 1; 
+        }
+
+        .hidden { 
+            display: none !important; 
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 1.1rem;
+        }
+
+        @media (max-width: 768px) {
+            .flip-camera-btn {
+                top: 15px;
+                right: 15px;
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+            
+            .video-preview {
+                top: 80px;
+                right: 15px;
+                width: 140px;
+                height: 105px;
+            }
+            
+            .profile-avatar-container {
+                width: 130px;
+                height: 130px;
+            }
+            
+            .profile-avatar-placeholder {
+                font-size: 3rem;
+            }
+            
+            .profile-actions {
+                flex-direction: column;
+            }
+            
+            .logout-btn {
+                padding: 18px;
+            }
+            
+            .call-btn {
+                width: 56px;
+                height: 56px;
+                font-size: 1.3rem;
+            }
+            
+            .call-bottom {
+                gap: 30px;
+            }
+            
+            .call-avatar-large {
+                width: 140px;
+                height: 140px;
+                font-size: 3.5rem;
+            }
+            
+            .call-name {
+                font-size: 1.6rem;
+            }
+            
+            .call-status-text {
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .flip-camera-btn {
+                top: 10px;
+                right: 10px;
+                width: 46px;
+                height: 46px;
+            }
+            
+            .video-preview {
+                top: 70px;
+                right: 10px;
+                width: 120px;
+                height: 90px;
+            }
+            
+            .toggle-camera-badge {
+                font-size: 0.7rem;
+                padding: 4px 8px;
+            }
+            
+            .call-avatar-large {
+                width: 120px;
+                height: 120px;
+                font-size: 3rem;
+            }
+            
+            .call-name {
+                font-size: 1.5rem;
+            }
+            
+            .call-status-text {
+                font-size: 1rem;
+            }
+            
+            .timer {
+                font-size: 2.5rem;
+            }
+            
+            .call-bottom {
+                gap: 20px;
+            }
+            
+            .call-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p id="loadingText">Conectando...</p>
+        <div id="retryButtonContainer" style="display: none; margin-top: 20px;">
+            <button id="retryConnection" style="background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 0.9rem;">
+                <i class="fas fa-redo"></i> Reintentar conexión
+            </button>
+            <button id="goToLogin" style="background: transparent; color: var(--accent); border: 1px solid var(--accent); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; margin-left: 10px;">
+                <i class="fas fa-sign-in-alt"></i> Volver a login
+            </button>
+        </div>
+    </div>
+
+    <header class="app-header">
+        <div class="header-title">Llamadas</div>
+        <div class="my-avatar-container" id="myAvatarContainer">
+            <div class="my-avatar" id="myAvatar">U</div>
+            <div class="status-indicator" id="myStatusIndicator"></div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="users-list" id="usersList">
+            <div class="empty-state">
+                <i class="fas fa-users"></i>
+                <p>Cargando usuarios...</p>
+            </div>
+        </div>
+    </main>
+
+    <div class="call-overlay" id="callOverlay">
+        <div class="call-top">
+            <div class="call-avatar-large" id="callAvatarLarge">U</div>
+            <div class="call-name" id="callPeerName">Usuario</div>
+            <div class="call-status-text" id="callStatusText">Llamando...</div>
+            <div class="timer" id="timer">00:00</div>
+        </div>
+
+        <div class="video-container" id="videoContainer">
+            <video id="remoteVideo" autoplay playsinline></video>
+        </div>
+
+        <div class="video-preview" id="videoPreview">
+            <video id="localVideoPreview" autoplay playsinline muted></video>
+            <div class="toggle-camera-badge" id="cameraBadge">
+                <i class="fas fa-camera"></i>
+                <span>Tu cámara</span>
+            </div>
+        </div>
+
+        <button class="flip-camera-btn" id="flipCamera" title="Voltear cámara">
+            <i class="fas fa-camera-rotate"></i>
+        </button>
+
+        <div class="call-bottom" id="callControls">
+            <button class="call-btn" id="toggleMic"><i class="fas fa-microphone"></i></button>
+            <button class="call-btn end" id="endCall"><i class="fas fa-phone-slash"></i></button>
+            <button class="call-btn" id="toggleCamera"><i class="fas fa-video"></i></button>
+        </div>
+
+        <div class="call-bottom hidden" id="incomingControls">
+            <button class="call-btn end" id="rejectCall"><i class="fas fa-phone-slash"></i></button>
+            <button class="call-btn accept" id="acceptCall"><i class="fas fa-phone"></i></button>
+        </div>
+    </div>
+
+    <div class="profile-modal" id="profileModal">
+        <div class="profile-header">
+            <button class="back-btn" id="profileBackBtn"><i class="fas fa-arrow-left"></i></button>
+            <div class="profile-title">Mi Perfil</div>
+        </div>
+
+        <div class="profile-avatar-section">
+            <div class="profile-avatar-container">
+                <img class="profile-avatar-img" id="profileAvatarImg" src="" alt="Avatar">
+                <div class="profile-avatar-placeholder" id="profileAvatarPlaceholder">U</div>
+            </div>
+            <button class="change-photo-btn" id="changePhotoBtn">
+                <i class="fas fa-camera"></i> Cambiar foto
+            </button>
+            <input type="file" id="profilePhotoInput" accept="image/*" style="display:none;">
+        </div>
+
+        <div class="profile-form">
+            <div class="form-group">
+                <label for="profileNameInput"><i class="fas fa-user"></i> Nombre de usuario</label>
+                <input type="text" class="profile-input" id="profileNameInput" placeholder="Tu nombre">
+                <span class="form-note">Mínimo 3 caracteres</span>
+            </div>
+            
+            <div class="form-group">
+                <label for="profileCurrentPassword"><i class="fas fa-lock"></i> Contraseña actual</label>
+                <div class="password-container">
+                    <input type="password" class="profile-input" id="profileCurrentPassword" placeholder="Contraseña actual (para cambios)">
+                    <button type="button" class="toggle-password-btn" data-target="profileCurrentPassword">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <span class="form-note">Solo si quieres cambiar la contraseña</span>
+            </div>
+            
+            <div class="form-group">
+                <label for="profileNewPassword"><i class="fas fa-key"></i> Nueva contraseña</label>
+                <div class="password-container">
+                    <input type="password" class="profile-input" id="profileNewPassword" placeholder="Nueva contraseña (opcional)">
+                    <button type="button" class="toggle-password-btn" data-target="profileNewPassword">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="profileConfirmPassword"><i class="fas fa-check-circle"></i> Confirmar contraseña</label>
+                <div class="password-container">
+                    <input type="password" class="profile-input" id="profileConfirmPassword" placeholder="Confirmar nueva contraseña">
+                    <button type="button" class="toggle-password-btn" data-target="profileConfirmPassword">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="profile-actions">
+                <button class="save-btn" id="saveProfileBtn">
+                    <i class="fas fa-save"></i> Guardar cambios
+                </button>
+                <button class="logout-btn" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification-toast" id="notificationToast"></div>
+
+    <audio id="localAudio" autoplay muted></audio>
+    <audio id="remoteAudio" autoplay></audio>
+
+    <script>
+        // ========== CONFIGURACIÓN ==========
+        const WS_URL = window.location.protocol === 'https:' 
+            ? `wss://${window.location.host}/ws`
+            : `ws://${window.location.host}/ws`;
+
+        const ICE_CONFIG = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' },
+                { urls: 'stun:stun3.l.google.com:19302' },
+                { urls: 'stun:stun4.l.google.com:19302' }
+            ],
+            iceCandidatePoolSize: 10
+        };
+
+        // ========== ESTADO DE LA APLICACIÓN ==========
+        const AppState = {
+            ws: null,
+            peer: null,
+            localStream: null,
+            videoStream: null,
+            userId: '',
+            username: '',
+            avatarColor: '#3390ec',
+            profilePhoto: null,
+            users: [],
+            currentCall: { 
+                peerId: '', 
+                peerName: '', 
+                peerAvatar: '', 
+                isActive: false, 
+                isInitiator: false,
+                startTime: null 
+            },
+            settings: { 
+                micEnabled: true, 
+                cameraEnabled: false,
+                cameraFacing: 'user',
+                isVideoCall: false 
+            },
+            timerInterval: null,
+            callTimeout: null,
+            connected: false,
+            sessionToken: null,
+            reconnectAttempts: 0,
+            maxReconnectAttempts: 10
+        };
+
+        // ========== CARGA DE PERFIL ==========
+        function loadProfile() {
+            console.log('Cargando perfil...');
+            
+            const token = localStorage.getItem('webrtc_session_token');
+            const savedUser = localStorage.getItem('webrtc_user');
+            
+            console.log('Token en localStorage:', token ? 'PRESENTE' : 'AUSENTE');
+            console.log('Usuario en localStorage:', savedUser ? 'PRESENTE' : 'AUSENTE');
+            
+            if (!token || !savedUser) {
+                console.log('No hay sesión activa, redirigiendo a login...');
+                window.location.href = '/';
+                return;
+            }
+            
+            try {
+                const userData = JSON.parse(savedUser);
+                AppState.userId = userData.id;
+                AppState.username = userData.username;
+                AppState.profilePhoto = userData.avatar_url;
+                AppState.sessionToken = token;
+                
+                console.log('Perfil cargado:', {
+                    username: AppState.username,
+                    userId: AppState.userId,
+                    hasAvatar: !!AppState.profilePhoto
+                });
+                
+                // Actualizar interfaz
+                document.getElementById('myAvatar').textContent = AppState.username.charAt(0).toUpperCase() || 'U';
+                document.getElementById('myStatusIndicator').classList.add('offline');
+                
+                // Conectar WebSocket
+                setTimeout(() => {
+                    WebSocketManager.connect();
+                }, 500);
+                
+            } catch (error) {
+                console.error('Error al cargar perfil:', error);
+                localStorage.clear();
+                window.location.href = '/';
+            }
+        }
+
+        // ========== ACTUALIZACIÓN DE AVATAR ==========
+        async function updateMyAvatar() {
+            const avatar = document.getElementById('myAvatar');
+            if (AppState.profilePhoto) {
+                avatar.style.background = 'none';
+                avatar.innerHTML = `<img src="${AppState.profilePhoto}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+            } else {
+                avatar.style.background = `linear-gradient(135deg, ${AppState.avatarColor}, #5ba8f5)`;
+                avatar.textContent = AppState.username.charAt(0).toUpperCase() || 'U';
+            }
+            document.getElementById('myStatusIndicator').classList.toggle('offline', !AppState.connected);
+        }
+
+        // ========== NOTIFICACIONES ==========
+        function showNotification(message, duration = 3000) {
+            const toast = document.getElementById('notificationToast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), duration);
+        }
+
+        // ========== FINALIZAR LLAMADA ==========
+        function endCall() {
+            console.log('Finalizando llamada...');
+            
+            if (AppState.currentCall.peerId) {
+                WebSocketManager.send('call_end', { targetId: AppState.currentCall.peerId });
+            }
+            
+            if (AppState.peer) {
+                AppState.peer.destroy();
+                AppState.peer = null;
+            }
+            
+            if (AppState.localStream) {
+                AppState.localStream.getTracks().forEach(track => track.stop());
+                AppState.localStream = null;
+            }
+            
+            if (AppState.videoStream) {
+                AppState.videoStream.getTracks().forEach(track => track.stop());
+                AppState.videoStream = null;
+            }
+            
+            document.getElementById('callOverlay').classList.remove('active');
+            document.getElementById('videoPreview').classList.remove('active');
+            document.getElementById('flipCamera').style.display = 'none';
+            document.getElementById('toggleCamera').innerHTML = '<i class="fas fa-video-slash"></i>';
+            
+            AppState.currentCall = { 
+                peerId: '', 
+                peerName: '', 
+                peerAvatar: '', 
+                isActive: false, 
+                isInitiator: false, 
+                startTime: null 
+            };
+            AppState.settings.cameraEnabled = false;
+            
+            showNotification('Llamada finalizada');
+        }
+
+        // ========== CONTROLES DE LLAMADA ==========
+        function toggleMic() {
+            AppState.settings.micEnabled = !AppState.settings.micEnabled;
+            if (AppState.localStream) {
+                AppState.localStream.getAudioTracks().forEach(track => track.enabled = AppState.settings.micEnabled);
+            }
+            const icon = document.getElementById('toggleMic').querySelector('i');
+            icon.className = AppState.settings.micEnabled ? 'fas fa-microphone' : 'fas fa-microphone-slash';
+            showNotification(AppState.settings.micEnabled ? 'Micrófono activado' : 'Micrófono desactivado');
+        }
+
+        async function toggleCamera() {
+            if (AppState.settings.cameraEnabled) {
+                // Desactivar cámara
+                if (AppState.videoStream) {
+                    AppState.videoStream.getTracks().forEach(track => track.stop());
+                }
+                if (AppState.localStream) {
+                    AppState.localStream.getVideoTracks().forEach(track => AppState.localStream.removeTrack(track));
+                }
+                AppState.settings.cameraEnabled = false;
+                document.getElementById('videoPreview').classList.remove('active');
+                document.getElementById('flipCamera').style.display = 'none';
+                document.getElementById('toggleCamera').innerHTML = '<i class="fas fa-video-slash"></i>';
+                showNotification('Cámara desactivada');
+            } else {
+                // Activar cámara
+                try {
+                    const constraints = {
+                        video: {
+                            facingMode: AppState.settings.cameraFacing
+                        }
+                    };
+                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    AppState.videoStream = stream;
+                    AppState.settings.cameraEnabled = true;
+                    document.getElementById('localVideoPreview').srcObject = stream;
+                    document.getElementById('videoPreview').classList.add('active');
+                    document.getElementById('flipCamera').style.display = 'flex';
+                    document.getElementById('toggleCamera').innerHTML = '<i class="fas fa-video"></i>';
+                    if (AppState.localStream) {
+                        stream.getVideoTracks().forEach(track => AppState.localStream.addTrack(track));
+                    }
+                    showNotification('Cámara activada');
+                } catch (err) {
+                    console.error('Error al acceder a la cámara:', err);
+                    showNotification('Error al acceder a la cámara');
+                }
+            }
+        }
+
+        async function flipCamera() {
+            if (!AppState.settings.cameraEnabled) return;
+            AppState.settings.cameraFacing = AppState.settings.cameraFacing === 'user' ? 'environment' : 'user';
+            await toggleCamera();
+            await toggleCamera(); // Doble toggle para cambiar la cámara
+            showNotification(`Cámara ${AppState.settings.cameraFacing === 'user' ? 'frontal' : 'trasera'} activada`);
+        }
+
+        // ========== WEBRTC MANAGER ==========
+        const WebRTCManager = {
+            async start(isInitiator) {
+                console.log('Iniciando WebRTC, iniciador:', isInitiator);
+                
+                try {
+                    const constraints = {
+                        audio: true,
+                        video: AppState.settings.cameraEnabled ? { facingMode: AppState.settings.cameraFacing } : false
+                    };
+                    
+                    AppState.localStream = await navigator.mediaDevices.getUserMedia(constraints);
+                    console.log('Stream local obtenido');
+                    
+                    if (AppState.settings.cameraEnabled) {
+                        AppState.videoStream = AppState.localStream;
+                        document.getElementById('localVideoPreview').srcObject = AppState.localStream;
+                        document.getElementById('videoPreview').classList.add('active');
+                        document.getElementById('flipCamera').style.display = 'flex';
+                    }
+                    
+                    this.createPeer(isInitiator);
+                    
+                } catch (err) {
+                    console.error('Error al acceder a dispositivos:', err);
+                    showNotification('Error al acceder a micrófono/cámara');
+                    endCall();
+                }
+            },
+
+            createPeer(isInitiator) {
+                console.log('Creando peer, iniciador:', isInitiator);
+                
+                AppState.peer = new SimplePeer({
+                    initiator: isInitiator,
+                    stream: AppState.localStream,
+                    config: ICE_CONFIG,
+                    trickle: true
+                });
+
+                AppState.peer.on('signal', (signal) => {
+                    console.log('Señal WebRTC generada');
+                    WebSocketManager.send('webrtc_signal', { 
+                        targetId: AppState.currentCall.peerId, 
+                        signal: signal 
+                    });
+                });
+
+                AppState.peer.on('stream', (remoteStream) => {
+                    console.log('Stream remoto recibido');
+                    document.getElementById('remoteVideo').srcObject = remoteStream;
+                    document.getElementById('remoteAudio').srcObject = remoteStream;
+                    
+                    AppState.currentCall.isActive = true;
+                    document.getElementById('callStatusText').textContent = 'En llamada';
+                    document.getElementById('videoContainer').classList.add('active');
+                    
+                    // Iniciar timer
+                    AppState.currentCall.startTime = Date.now();
+                    startTimer();
+                    
+                    showNotification('Conexión establecida');
+                });
+
+                AppState.peer.on('connect', () => {
+                    console.log('Peer conectado');
+                });
+
+                AppState.peer.on('error', (err) => {
+                    console.error('Error en peer:', err);
+                    showNotification('Error en la conexión');
+                    endCall();
+                });
+
+                AppState.peer.on('close', () => {
+                    console.log('Peer cerrado');
+                    endCall();
+                });
+            }
+        };
+
+        // ========== TIMER ==========
+        function startTimer() {
+            let seconds = 0;
+            const timerElement = document.getElementById('timer');
+            timerElement.classList.add('active');
+            
+            AppState.timerInterval = setInterval(() => {
+                seconds++;
+                const minutes = Math.floor(seconds / 60);
+                const remainingSeconds = seconds % 60;
+                timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (AppState.timerInterval) {
+                clearInterval(AppState.timerInterval);
+                AppState.timerInterval = null;
+                document.getElementById('timer').classList.remove('active');
+                document.getElementById('timer').textContent = '00:00';
+            }
+        }
+
+        // ========== WEBSOCKET MANAGER ==========
+        const WebSocketManager = {
+            connect() {
+                if (!AppState.sessionToken) {
+                    console.error('No hay token de sesión para conectar WebSocket');
+                    return;
+                }
+                
+                const wsUrl = `${WS_URL}?token=${encodeURIComponent(AppState.sessionToken)}`;
+                console.log('Conectando a WebSocket:', wsUrl);
+                
+                AppState.ws = new WebSocket(wsUrl);
+
+                AppState.ws.onopen = () => {
+                    console.log('WebSocket conectado exitosamente');
+                    AppState.connected = true;
+                    AppState.reconnectAttempts = 0;
+                    updateMyAvatar();
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                    
+                    // Solicitar lista de usuarios
+                    setTimeout(() => {
+                        AppState.ws.send(JSON.stringify({ type: 'get_users' }));
+                    }, 500);
+                };
+
+                AppState.ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        console.log('Mensaje WebSocket recibido:', data.type);
+                        
+                        switch(data.type) {
+                            case 'registered':
+                                console.log('Registrado en servidor con ID:', data.userId);
+                                break;
+                                
+                            case 'user_list':
+                                AppState.users = data.users || [];
+                                updateUserList(AppState.users);
+                                break;
+                                
+                            case 'incoming_call':
+                                this.handleIncomingCall(data);
+                                break;
+                                
+                            case 'call_accepted':
+                                console.log('Llamada aceptada por:', data.calleeId);
+                                document.getElementById('callStatusText').textContent = 'Conectando...';
+                                break;
+                                
+                            case 'call_declined':
+                                console.log('Llamada rechazada por:', data.calleeId);
+                                showNotification('Llamada rechazada');
+                                endCall();
+                                break;
+                                
+                            case 'webrtc_signal':
+                                if (AppState.peer) {
+                                    console.log('Procesando señal WebRTC');
+                                    AppState.peer.signal(data.signal);
+                                }
+                                break;
+                                
+                            default:
+                                console.log('Tipo de mensaje desconocido:', data.type);
+                        }
+                    } catch (error) {
+                        console.error('Error procesando mensaje WebSocket:', error);
+                    }
+                };
+
+                AppState.ws.onerror = (error) => {
+                    console.error('Error en WebSocket:', error);
+                };
+
+                AppState.ws.onclose = () => {
+                    console.log('WebSocket cerrado');
+                    AppState.connected = false;
+                    updateMyAvatar();
+                    
+                    // Solo intentar reconectar si fue una desconexión inesperada
+                    if (!AppState.ws.closeInitiated) {
+                        AppState.reconnectAttempts++;
+                        if (AppState.reconnectAttempts <= AppState.maxReconnectAttempts) {
+                            const delay = Math.min(1000 * Math.pow(2, AppState.reconnectAttempts), 10000);
+                            document.getElementById('loadingOverlay').style.display = 'flex';
+                            document.getElementById('loadingText').textContent = `Reconectando... (Intento ${AppState.reconnectAttempts} de ${AppState.maxReconnectAttempts})`;
+                            console.log(`Reintentando conexión en ${delay}ms`);
+                            setTimeout(() => this.connect(), delay);
+                        } else {
+                            document.getElementById('loadingText').textContent = 'No se pudo conectar al servidor';
+                            document.getElementById('retryButtonContainer').style.display = 'block';
+                        }
+                    }
+                };
+            },
+
+            handleIncomingCall(data) {
+                console.log('Llamada entrante de:', data.callerName);
+                
+                AppState.currentCall = {
+                    peerId: data.callerId,
+                    peerName: data.callerName,
+                    peerAvatar: data.callerAvatar,
+                    isActive: false,
+                    isInitiator: false
+                };
+                
+                // Actualizar interfaz
+                document.getElementById('callOverlay').classList.add('active');
+                document.getElementById('incomingControls').classList.remove('hidden');
+                document.getElementById('callControls').classList.add('hidden');
+                document.getElementById('callPeerName').textContent = data.callerName;
+                document.getElementById('callStatusText').textContent = 'Llamada entrante';
+                
+                // Actualizar avatar de llamada
+                const callAvatar = document.getElementById('callAvatarLarge');
+                if (data.callerAvatar) {
+                    callAvatar.innerHTML = `<img src="${data.callerAvatar}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+                } else {
+                    callAvatar.textContent = data.callerName.charAt(0).toUpperCase();
+                    callAvatar.style.background = 'linear-gradient(135deg, #3390ec, #5ba8f5)';
+                }
+                
+                // Mostrar notificación
+                showNotification(`Llamada entrante de ${data.callerName}`);
+            },
+
+            send(type, payload = {}) {
+                if (AppState.ws && AppState.ws.readyState === WebSocket.OPEN) {
+                    const message = JSON.stringify({ type, ...payload });
+                    console.log('Enviando mensaje WebSocket:', type, payload);
+                    AppState.ws.send(message);
+                    return true;
+                } else {
+                    console.error('WebSocket no está conectado');
+                    return false;
+                }
+            }
+        };
+
+        // ========== ACTUALIZACIÓN DE LISTA DE USUARIOS ==========
+        function updateUserList(users) {
+            console.log('Actualizando lista de usuarios:', users.length);
+            
+            const list = document.getElementById('usersList');
+            if (!users || users.length === 0) {
+                list.innerHTML = '<div class="empty-state"><i class="fas fa-users"></i><p>No hay usuarios disponibles</p></div>';
+                return;
+            }
+            
+            let html = '';
+            users.forEach(user => {
+                if (user.id === AppState.userId) return;
+                
+                const initials = user.username.charAt(0).toUpperCase();
+                const avatar = user.avatar_url 
+                    ? `<img src="${user.avatar_url}" alt="${user.username}">`
+                    : `<div style="background: linear-gradient(135deg, #3390ec, #5ba8f5); display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; border-radius: 50%; color: white; font-weight: bold; font-size: 1.2rem;">${initials}</div>`;
+                
+                const status = user.is_connected ? 'Disponible' : 'Desconectado';
+                const disabled = !user.is_connected ? 'disabled' : '';
+                
+                html += `
+                    <div class="user-item ${disabled}" data-id="${user.id}" data-username="${user.username}">
+                        <div class="user-avatar-small">${avatar}</div>
+                        <div class="user-info">
+                            <h3>${user.username}</h3>
+                            <p><span class="status-dot ${user.is_connected ? 'online' : 'offline'}"></span>${status}</p>
+                        </div>
+                        <div class="call-action ${disabled}">
+                            <i class="fas fa-phone${disabled ? '-slash' : ''}"></i>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            list.innerHTML = html;
+
+            // Agregar event listeners a los usuarios disponibles
+            document.querySelectorAll('.user-item:not(.disabled)').forEach(item => {
+                item.addEventListener('click', () => {
+                    const targetId = item.dataset.id;
+                    const peerName = item.dataset.username;
+                    
+                    console.log('Iniciando llamada a:', peerName, 'ID:', targetId);
+                    
+                    AppState.currentCall = {
+                        peerId: targetId,
+                        peerName: peerName,
+                        isActive: false,
+                        isInitiator: true
+                    };
+                    
+                    // Actualizar interfaz
+                    document.getElementById('callOverlay').classList.add('active');
+                    document.getElementById('callControls').classList.remove('hidden');
+                    document.getElementById('incomingControls').classList.add('hidden');
+                    document.getElementById('callPeerName').textContent = peerName;
+                    document.getElementById('callStatusText').textContent = 'Llamando...';
+                    
+                    // Actualizar avatar
+                    const callAvatar = document.getElementById('callAvatarLarge');
+                    callAvatar.textContent = peerName.charAt(0).toUpperCase();
+                    callAvatar.style.background = 'linear-gradient(135deg, #3390ec, #5ba8f5)';
+                    
+                    // Enviar solicitud de llamada
+                    if (WebSocketManager.send('call_request', { targetId })) {
+                        // Iniciar WebRTC después de un breve delay
+                        setTimeout(() => {
+                            WebRTCManager.start(true);
+                        }, 1000);
+                    } else {
+                        showNotification('Error al iniciar llamada');
+                        endCall();
+                    }
+                });
+            });
+            
+            console.log('Lista de usuarios actualizada');
+        }
+
+        // ========== INICIALIZACIÓN ==========
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM cargado, iniciando aplicación...');
+            
+            // Configurar event listeners
+            document.getElementById('retryConnection').addEventListener('click', () => {
+                console.log('Reintentando conexión...');
+                AppState.reconnectAttempts = 0;
+                document.getElementById('retryButtonContainer').style.display = 'none';
+                WebSocketManager.connect();
+            });
+
+            document.getElementById('goToLogin').addEventListener('click', () => {
+                console.log('Volviendo a login...');
+                localStorage.clear();
+                // Usar fetch para cerrar sesión en el servidor
+                fetch('/api/logout')
+                    .then(() => {
+                        window.location.href = '/';
+                    })
+                    .catch(() => {
+                        window.location.href = '/';
+                    });
+            });
+
+            document.getElementById('myAvatarContainer').addEventListener('click', () => {
+                console.log('Abriendo perfil...');
+                document.getElementById('profileModal').classList.add('active');
+            });
+            
+            document.getElementById('profileBackBtn').addEventListener('click', () => {
+                document.getElementById('profileModal').classList.remove('active');
+            });
+            
+            document.getElementById('endCall').addEventListener('click', endCall);
+            document.getElementById('toggleMic').addEventListener('click', toggleMic);
+            document.getElementById('toggleCamera').addEventListener('click', toggleCamera);
+            document.getElementById('flipCamera').addEventListener('click', flipCamera);
+            
+            document.getElementById('rejectCall').addEventListener('click', () => {
+                console.log('Rechazando llamada...');
+                WebSocketManager.send('call_decline', { callerId: AppState.currentCall.peerId });
+                endCall();
+            });
+            
+            document.getElementById('acceptCall').addEventListener('click', () => {
+                console.log('Aceptando llamada...');
+                document.getElementById('incomingControls').classList.add('hidden');
+                document.getElementById('callControls').classList.remove('hidden');
+                document.getElementById('callStatusText').textContent = 'Conectando...';
+                
+                WebSocketManager.send('call_accept', { callerId: AppState.currentCall.peerId });
+                
+                // Iniciar WebRTC después de un breve delay
+                setTimeout(() => {
+                    WebRTCManager.start(false);
+                }, 500);
+            });
+            
+            // Cerrar sesión
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                console.log('Cerrando sesión...');
+                localStorage.clear();
+                fetch('/api/logout')
+                    .then(() => {
+                        window.location.href = '/';
+                    })
+                    .catch(() => {
+                        window.location.href = '/';
+                    });
+            });
+            
+            console.log('Event listeners configurados');
+            
+            // Cargar perfil
+            loadProfile();
+        });
+    </script>
+    
+    <!-- Registrar Service Worker para PWA -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then((registration) => {
+                        console.log('Service Worker registrado con éxito:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.log('Error al registrar Service Worker:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
