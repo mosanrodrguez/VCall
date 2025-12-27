@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WebRTC Calls</title>
+    <title>Llamadas WebRTC</title>
     
     <!-- Fuentes e iconos -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,11 +15,11 @@
     <script src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.1/simplepeer.min.js"></script>
     
     <!-- Metatags para PWA -->
-    <meta name="application-name" content="WebRTC Calls">
+    <meta name="application-name" content="Llamadas WebRTC">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="WebRTC Calls">
-    <meta name="description" content="Llamadas de voz y video en tiempo real">
+    <meta name="apple-mobile-web-app-title" content="Llamadas WebRTC">
+    <meta name="description" content="Llamadas de voz en tiempo real">
     <meta name="format-detection" content="telephone=no">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="msapplication-TileColor" content="#3390ec">
@@ -44,7 +44,6 @@
             --warning: #ff9800;
             --danger: #f44336;
             --border: #2f3a42;
-            --border-light: #3a4650;
         }
 
         * { 
@@ -71,19 +70,13 @@
             align-items: center;
             justify-content: center;
             z-index: 2000;
-            transition: opacity 0.3s ease;
-        }
-
-        .loading-overlay.hidden {
-            opacity: 0;
-            pointer-events: none;
         }
 
         .spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid var(--surface);
-            border-top: 4px solid var(--accent);
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--surface);
+            border-top: 3px solid var(--accent);
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin-bottom: 20px;
@@ -94,7 +87,7 @@
         }
 
         .loading-text {
-            font-size: 1.1rem;
+            font-size: 1rem;
             color: var(--text-secondary);
             margin-bottom: 20px;
         }
@@ -110,11 +103,10 @@
             position: sticky;
             top: 0;
             z-index: 100;
-            backdrop-filter: blur(10px);
         }
 
         .header-title { 
-            font-size: 1.4rem; 
+            font-size: 1.3rem; 
             font-weight: 600; 
             color: var(--accent);
         }
@@ -122,26 +114,21 @@
         .my-avatar-container {
             position: relative;
             cursor: pointer;
-            transition: transform 0.2s ease;
-        }
-
-        .my-avatar-container:hover {
-            transform: scale(1.05);
         }
 
         .my-avatar {
-            width: 44px;
-            height: 44px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             background: linear-gradient(135deg, var(--accent), #5ba8f5);
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            font-size: 1.2rem;
+            font-size: 1rem;
             color: white;
             overflow: hidden;
-            border: 2px solid var(--border-light);
+            border: 2px solid var(--border);
         }
 
         .my-avatar img {
@@ -155,25 +142,15 @@
             position: absolute;
             bottom: 0;
             right: 0;
-            width: 14px;
-            height: 14px;
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
-            background: var(--success);
-            border: 3px solid var(--surface);
-            transition: all 0.3s ease;
+            background: var(--danger);
+            border: 2px solid var(--surface);
         }
 
-        .status-indicator.offline { 
-            background: var(--danger); 
-        }
-        .status-indicator.connecting { 
-            background: var(--warning); 
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+        .status-indicator.online { 
+            background: var(--success); 
         }
 
         /* ===== CONNECTION STATUS ===== */
@@ -183,57 +160,49 @@
             left: 50%;
             transform: translateX(-50%);
             background: var(--surface);
-            padding: 10px 20px;
-            border-radius: 25px;
-            font-size: 0.9rem;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             z-index: 1001;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
             border: 1px solid var(--border);
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
             opacity: 0;
             visibility: hidden;
+            transition: all 0.3s ease;
         }
 
         .connection-status.show {
             opacity: 1;
             visibility: visible;
-            top: 80px;
+            top: 70px;
         }
 
         .connection-status.connected {
-            background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(46, 125, 50, 0.2));
+            background: rgba(76, 175, 80, 0.2);
             border-color: rgba(76, 175, 80, 0.3);
         }
 
         .connection-status.disconnected {
-            background: linear-gradient(135deg, rgba(244, 67, 54, 0.2), rgba(198, 40, 40, 0.2));
+            background: rgba(244, 67, 54, 0.2);
             border-color: rgba(244, 67, 54, 0.3);
-        }
-
-        .connection-status.reconnecting {
-            background: linear-gradient(135deg, rgba(255, 152, 0, 0.2), rgba(204, 112, 0, 0.2));
-            border-color: rgba(255, 152, 0, 0.3);
         }
 
         /* ===== USERS LIST ===== */
         .users-list { 
             padding: 20px 0;
             background: var(--bg);
-            min-height: calc(100vh - 76px);
+            min-height: calc(100vh - 72px);
         }
 
         .user-item {
             display: flex;
             align-items: center;
-            padding: 16px 20px;
+            padding: 14px 16px;
             border-bottom: 1px solid var(--border);
             cursor: pointer;
-            transition: all 0.2s ease;
-            position: relative;
+            transition: background-color 0.2s ease;
         }
 
         .user-item:hover {
@@ -249,37 +218,21 @@
             background-color: transparent; 
         }
 
-        .user-item.connecting::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(90deg, transparent, rgba(51, 144, 236, 0.1), transparent);
-            animation: shimmer 2s infinite;
-        }
-
-        @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
-
         .user-avatar-small {
-            width: 56px;
-            height: 56px;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            font-size: 1.4rem;
+            font-size: 1.2rem;
             color: white;
-            margin-right: 16px;
+            margin-right: 14px;
             flex-shrink: 0;
             overflow: hidden;
-            border: 2px solid var(--border-light);
-            transition: all 0.3s ease;
+            border: 2px solid var(--border);
+            background: linear-gradient(135deg, var(--accent), #5ba8f5);
         }
 
         .user-avatar-small img {
@@ -289,25 +242,15 @@
             object-fit: cover;
         }
 
-        .user-avatar-small.available {
-            border-color: var(--success);
-            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
-        }
-
-        .user-avatar-small.offline {
-            border-color: var(--danger);
-            filter: grayscale(0.7);
-        }
-
         .user-info { 
             flex: 1;
             min-width: 0;
         }
         
         .user-info h3 { 
-            font-size: 1.2rem; 
+            font-size: 1.1rem; 
             font-weight: 500; 
-            margin-bottom: 6px; 
+            margin-bottom: 4px; 
             color: var(--text-primary);
             white-space: nowrap;
             overflow: hidden;
@@ -315,50 +258,36 @@
         }
         
         .user-info p { 
-            font-size: 0.95rem; 
+            font-size: 0.9rem; 
             color: var(--text-secondary); 
             display: flex; 
             align-items: center; 
-            gap: 8px; 
+            gap: 6px; 
         }
 
         .status-dot { 
-            width: 10px; 
-            height: 10px; 
+            width: 8px; 
+            height: 8px; 
             border-radius: 50%; 
             display: inline-block;
-            transition: all 0.3s ease;
         }
 
         .status-dot.online { 
             background: var(--success); 
-            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.3);
         }
         
         .status-dot.offline { 
             background: var(--text-secondary); 
         }
 
-        .status-dot.busy {
-            background: var(--warning);
-            box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.3);
-        }
-
         .call-action { 
             color: var(--accent); 
-            font-size: 1.6rem; 
-            padding: 12px;
-            border-radius: 50%;
-            transition: all 0.2s ease;
+            font-size: 1.4rem; 
+            padding: 10px;
         }
         
         .call-action.disabled { 
             color: var(--text-secondary); 
-        }
-
-        .call-action:hover:not(.disabled) {
-            background: rgba(51, 144, 236, 0.1);
-            transform: scale(1.1);
         }
 
         /* ===== CALL OVERLAY ===== */
@@ -370,13 +299,11 @@
             display: none;
             flex-direction: column;
             justify-content: space-between;
-            opacity: 0;
-            transition: opacity 0.3s ease;
+            padding: 40px 20px 30px;
         }
 
         .call-overlay.active { 
             display: flex;
-            opacity: 1;
         }
 
         .call-top {
@@ -388,25 +315,22 @@
             align-items: center;
             position: relative;
             z-index: 2;
-            padding: 40px 20px;
         }
 
         .call-avatar-large {
-            width: 180px;
-            height: 180px;
+            width: 140px;
+            height: 140px;
             border-radius: 50%;
-            margin: 0 auto 30px;
+            margin: 0 auto 25px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 4.5rem;
+            font-size: 3.5rem;
             font-weight: 700;
             color: white;
             overflow: hidden;
             background: linear-gradient(135deg, var(--accent), #5ba8f5);
-            border: 5px solid var(--border-light);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
-            transition: all 0.3s ease;
+            border: 3px solid var(--border);
         }
 
         .call-avatar-large img {
@@ -417,9 +341,9 @@
         }
 
         .call-name { 
-            font-size: 2rem; 
+            font-size: 1.6rem; 
             font-weight: 600; 
-            margin-bottom: 12px; 
+            margin-bottom: 10px; 
             color: var(--text-primary);
             max-width: 90%;
             white-space: nowrap;
@@ -428,153 +352,38 @@
         }
         
         .call-status-text { 
-            font-size: 1.3rem; 
+            font-size: 1.1rem; 
             color: var(--text-secondary);
-            margin-bottom: 20px;
-            min-height: 28px;
-            transition: all 0.3s ease;
-        }
-        
-        .call-status-text.connecting {
-            color: var(--warning);
-            animation: fadeInOut 2s infinite;
-        }
-
-        @keyframes fadeInOut {
-            0%, 100% { opacity: 0.7; }
-            50% { opacity: 1; }
+            margin-bottom: 15px;
+            min-height: 24px;
         }
         
         .timer { 
-            font-size: 4rem; 
-            font-weight: 700; 
-            margin: 30px 0; 
+            font-size: 1.8rem; 
+            font-weight: 600; 
+            margin: 20px 0; 
             color: var(--success);
-            text-shadow: 0 2px 10px rgba(76, 175, 80, 0.3);
             font-family: 'Courier New', monospace;
-            letter-spacing: 2px;
+            letter-spacing: 1px;
             display: none;
-            opacity: 0;
-            transition: opacity 0.5s ease;
         }
         
         .timer.active { 
             display: block;
-            opacity: 1;
-            animation: pulseTimer 2s infinite;
-        }
-
-        @keyframes pulseTimer {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-        }
-
-        /* ===== VIDEO CONTAINERS ===== */
-        .video-container {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            display: none;
-            z-index: 1;
-            background: #000;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
-
-        .video-container.active { 
-            display: block;
-            opacity: 1;
-        }
-
-        .video-container video { 
-            width: 100%; 
-            height: 100%; 
-            object-fit: cover; 
-            background: #000;
-            transform: scaleX(-1);
-        }
-
-        /* ===== LOCAL VIDEO PREVIEW ===== */
-        .video-preview {
-            position: fixed;
-            top: 100px;
-            right: 20px;
-            width: 220px;  /* Aumentado */
-            height: 165px; /* Aumentado proporcionalmente */
-            border-radius: 18px;
-            overflow: hidden;
-            border: 3px solid var(--accent);
-            box-shadow: 0 10px 40px rgba(51, 144, 236, 0.5);
-            background: #000;
-            z-index: 1000;
-            display: none;
-            opacity: 0;
-            transform: translateX(50px);
-            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        .video-preview.active {
-            display: block;
-            opacity: 1;
-            transform: translateX(0);
-        }
-
-        .video-preview video { 
-            width: 100%; 
-            height: 100%; 
-            object-fit: cover;
-            transform: scaleX(-1);
-        }
-
-        .toggle-camera-badge {
-            position: absolute;
-            bottom: 12px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            backdrop-filter: blur(10px);
-            white-space: nowrap;
-            z-index: 10;
-            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         /* ===== CALL CONTROLS ===== */
-        .call-controls-container {
-            position: relative;
-            z-index: 2;
-            padding: 30px 20px;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(20px);
-            border-radius: 30px 30px 0 0;
-            margin: 0 20px;
-            display: none;
-            opacity: 0;
-            transform: translateY(50px);
-            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        .call-controls-container.active {
-            display: block;
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .call-bottom {
+        .call-controls {
             display: flex;
             justify-content: center;
-            gap: 35px;
-            flex-wrap: wrap;
+            gap: 25px;
+            position: relative;
+            z-index: 2;
         }
 
         .call-btn {
-            width: 75px;  /* Aumentado */
-            height: 75px; /* Aumentado */
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
             background: var(--surface);
             border: none;
@@ -582,124 +391,41 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.9rem;
+            font-size: 1.5rem;
             cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .call-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .call-btn:hover::before {
-            opacity: 1;
+            transition: background-color 0.2s ease;
         }
 
         .call-btn:hover {
-            transform: scale(1.15) translateY(-5px);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
-        }
-
-        .call-btn:active {
-            transform: scale(0.95);
-            transition: transform 0.1s ease;
+            background: rgba(255, 255, 255, 0.1);
         }
 
         .call-btn.end { 
-            background: linear-gradient(135deg, #ff4444, #cc0000);
+            background: var(--danger); 
             color: white;
         }
         
         .call-btn.accept { 
-            background: linear-gradient(135deg, #00c851, #007e33);
+            background: var(--success); 
             color: white;
         }
 
         .call-btn.mic-off {
-            background: linear-gradient(135deg, #ff8800, #cc7000);
-            color: white;
-        }
-
-        .call-btn.camera-off {
-            background: linear-gradient(135deg, #aa66cc, #9933cc);
-            color: white;
-        }
-
-        .call-btn-label {
-            position: absolute;
-            bottom: -25px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            white-space: nowrap;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .call-btn:hover .call-btn-label {
-            opacity: 1;
-        }
-
-        /* Botón para voltear cámara */
-        .flip-camera-btn {
-            position: fixed;
-            top: 25px;
-            right: 25px;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: var(--surface);
-            border: 2px solid var(--border);
-            color: var(--text-primary);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.4rem;
-            cursor: pointer;
-            z-index: 1001;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-            transition: all 0.3s ease;
-        }
-
-        .flip-camera-btn.active {
-            display: flex;
-        }
-
-        .flip-camera-btn:hover {
-            background: var(--accent);
-            color: white;
-            transform: rotate(90deg);
+            background: rgba(255, 152, 0, 0.2);
+            color: var(--warning);
         }
 
         /* ===== INCOMING CALL CONTROLS ===== */
         .incoming-controls {
             display: none;
             justify-content: center;
-            gap: 50px;
-            padding: 40px 20px;
+            gap: 40px;
             position: relative;
             z-index: 2;
-            opacity: 0;
-            transform: translateY(30px);
-            transition: all 0.4s ease;
         }
 
         .incoming-controls.active {
             display: flex;
-            opacity: 1;
-            transform: translateY(0);
         }
 
         /* ===== PROFILE MODAL ===== */
@@ -709,79 +435,65 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(135deg, rgba(15, 20, 25, 0.95), rgba(26, 31, 46, 0.98));
+            background: var(--bg);
             z-index: 2000;
             display: none;
             flex-direction: column;
             overflow-y: auto;
             padding: 20px;
-            backdrop-filter: blur(20px);
-            opacity: 0;
-            transition: opacity 0.3s ease;
         }
 
         .profile-modal.active {
             display: flex;
-            opacity: 1;
         }
 
         .profile-header {
             display: flex;
             align-items: center;
-            margin-bottom: 40px;
-            padding-top: 20px;
+            margin-bottom: 30px;
+            padding-top: 10px;
         }
 
         .back-btn {
             background: none;
             border: none;
             color: var(--accent);
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             cursor: pointer;
-            width: 50px;
-            height: 50px;
+            width: 40px;
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 50%;
-            transition: all 0.2s ease;
         }
 
         .back-btn:hover {
             background: rgba(51, 144, 236, 0.1);
-            transform: scale(1.1);
         }
 
         .profile-title {
             flex: 1;
             text-align: center;
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             font-weight: 600;
             color: var(--text-primary);
         }
 
         .profile-avatar-section {
             text-align: center;
-            margin-bottom: 50px;
+            margin-bottom: 30px;
         }
 
         .profile-avatar-container {
-            width: 200px;  /* Aumentado significativamente */
-            height: 200px; /* Aumentado significativamente */
+            width: 120px;
+            height: 120px;
             border-radius: 50%;
-            margin: 0 auto 30px;
+            margin: 0 auto 20px;
             position: relative;
-            border: 6px solid var(--accent);
-            box-shadow: 0 20px 50px rgba(51, 144, 236, 0.5);
+            border: 3px solid var(--accent);
             overflow: hidden;
             background: var(--surface);
-            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-            cursor: pointer;
-        }
-
-        .profile-avatar-container:hover {
-            transform: scale(1.05);
-            box-shadow: 0 25px 60px rgba(51, 144, 236, 0.6);
         }
 
         .profile-avatar-img {
@@ -799,33 +511,22 @@
             justify-content: center;
             background: linear-gradient(135deg, var(--accent), #5ba8f5);
             color: white;
-            font-size: 5rem; /* Aumentado */
+            font-size: 3rem;
             font-weight: 700;
         }
 
         .change-photo-btn {
-            background: linear-gradient(135deg, var(--accent), #5ba8f5);
-            color: white;
-            border: none;
-            padding: 14px 32px;
-            border-radius: 30px;
-            font-size: 1.1rem;
+            background: var(--surface);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
             font-weight: 500;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 12px;
-            transition: all 0.3s ease;
-            box-shadow: 0 8px 25px rgba(51, 144, 236, 0.4);
-        }
-
-        .change-photo-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 35px rgba(51, 144, 236, 0.6);
-        }
-
-        .change-photo-btn:active {
-            transform: translateY(0);
+            gap: 8px;
         }
 
         .profile-form {
@@ -835,43 +536,39 @@
         }
 
         .form-group {
-            margin-bottom: 28px;
+            margin-bottom: 20px;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             color: var(--text-primary);
             font-weight: 500;
-            font-size: 1rem;
+            font-size: 0.9rem;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .form-group label i {
             color: var(--accent);
-            font-size: 1.1rem;
-            width: 24px;
-            text-align: center;
+            font-size: 0.9rem;
         }
 
         .profile-input {
             width: 100%;
-            padding: 18px;
-            background: rgba(255, 255, 255, 0.08);
-            border: 2px solid var(--border);
-            border-radius: 15px;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 8px;
             color: var(--text-primary);
-            font-size: 1rem;
-            transition: all 0.3s ease;
+            font-size: 0.95rem;
         }
 
         .profile-input:focus {
             outline: none;
             border-color: var(--accent);
-            box-shadow: 0 0 0 4px rgba(51, 144, 236, 0.2);
-            background: rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.08);
         }
 
         .password-container {
@@ -880,133 +577,88 @@
 
         .toggle-password-btn {
             position: absolute;
-            right: 18px;
+            right: 14px;
             top: 50%;
             transform: translateY(-50%);
             background: none;
             border: none;
             color: var(--text-secondary);
             cursor: pointer;
-            padding: 5px;
-            font-size: 1.2rem;
-            z-index: 2;
-            transition: color 0.2s ease;
-        }
-
-        .toggle-password-btn:hover {
-            color: var(--text-primary);
+            padding: 4px;
+            font-size: 1rem;
         }
 
         .form-note {
             color: var(--text-secondary);
-            font-size: 0.9rem;
-            margin-top: 8px;
+            font-size: 0.8rem;
+            margin-top: 5px;
             display: block;
-            line-height: 1.5;
         }
 
         .profile-actions {
             display: flex;
-            gap: 20px;
-            margin-top: 50px;
+            gap: 15px;
+            margin-top: 30px;
         }
 
         .save-btn {
             flex: 1;
-            padding: 20px;
-            background: linear-gradient(135deg, #4caf50, #2e7d32);
+            padding: 14px;
+            background: var(--accent);
             color: white;
             border: none;
-            border-radius: 15px;
-            font-size: 1.2rem;
+            border-radius: 8px;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
-            transition: all 0.3s ease;
-            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
+            gap: 8px;
         }
 
         .save-btn:disabled {
-            opacity: 0.6;
+            opacity: 0.5;
             cursor: not-allowed;
-            transform: none !important;
-            box-shadow: none !important;
-        }
-
-        .save-btn:hover:not(:disabled) {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 35px rgba(76, 175, 80, 0.6);
         }
 
         .logout-btn {
-            padding: 20px 30px;
-            background: linear-gradient(135deg, #f44336, #c62828);
+            padding: 14px 20px;
+            background: var(--danger);
             color: white;
             border: none;
-            border-radius: 15px;
-            font-size: 1.2rem;
+            border-radius: 8px;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
-            transition: all 0.3s ease;
-            box-shadow: 0 8px 25px rgba(244, 67, 54, 0.4);
-        }
-
-        .logout-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 35px rgba(244, 67, 54, 0.6);
+            gap: 8px;
         }
 
         /* ===== NOTIFICATION TOAST ===== */
         .notification-toast {
             position: fixed;
-            bottom: 30px;
+            bottom: 20px;
             left: 50%;
-            transform: translateX(-50%) translateY(100px);
+            transform: translateX(-50%);
             background: var(--surface);
             color: var(--text-primary);
-            padding: 16px 28px;
-            border-radius: 30px;
-            font-size: 1rem;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
             z-index: 1001;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
             border: 1px solid var(--border);
-            backdrop-filter: blur(20px);
-            display: flex;
-            align-items: center;
-            gap: 12px;
+            display: none;
             max-width: 90%;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            opacity: 0;
-            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
         .notification-toast.show { 
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
-
-        .notification-toast.success {
-            background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(46, 125, 50, 0.2));
-            border-color: rgba(76, 175, 80, 0.3);
-        }
-
-        .notification-toast.error {
-            background: linear-gradient(135deg, rgba(244, 67, 54, 0.2), rgba(198, 40, 40, 0.2));
-            border-color: rgba(244, 67, 54, 0.3);
-        }
-
-        .notification-toast.warning {
-            background: linear-gradient(135deg, rgba(255, 152, 0, 0.2), rgba(204, 112, 0, 0.2));
-            border-color: rgba(255, 152, 0, 0.3);
+            display: block;
         }
 
         /* ===== UTILITY CLASSES ===== */
@@ -1016,123 +668,34 @@
 
         .empty-state {
             text-align: center;
-            padding: 80px 20px;
+            padding: 60px 20px;
             color: var(--text-secondary);
         }
 
         .empty-state i {
-            font-size: 4rem;
-            margin-bottom: 25px;
+            font-size: 3rem;
+            margin-bottom: 15px;
             opacity: 0.5;
         }
 
         .empty-state p {
-            font-size: 1.2rem;
-            max-width: 300px;
+            font-size: 1rem;
+            max-width: 250px;
             margin: 0 auto;
-            line-height: 1.6;
         }
 
         .loading-users {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
-            padding: 60px 20px;
+            gap: 15px;
+            padding: 40px 20px;
         }
 
         .loading-users .spinner {
-            width: 40px;
-            height: 40px;
+            width: 30px;
+            height: 30px;
             margin-bottom: 0;
-        }
-
-        /* ===== INSTALL PROMPT ===== */
-        .install-prompt {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: linear-gradient(135deg, var(--surface), #1e2835);
-            color: var(--text-primary);
-            padding: 20px;
-            border-radius: 20px;
-            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5);
-            z-index: 10000;
-            max-width: 350px;
-            border: 1px solid var(--border);
-            backdrop-filter: blur(20px);
-            transform: translateY(100px);
-            opacity: 0;
-            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-            display: none;
-        }
-
-        .install-prompt.show {
-            display: block;
-            transform: translateY(0);
-            opacity: 1;
-        }
-
-        .install-prompt-header {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .install-prompt-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, var(--accent), #5ba8f5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-            color: white;
-        }
-
-        .install-prompt-body {
-            margin-bottom: 20px;
-            line-height: 1.6;
-        }
-
-        .install-prompt-actions {
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-        }
-
-        .install-btn {
-            padding: 12px 24px;
-            background: linear-gradient(135deg, var(--accent), #5ba8f5);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .install-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(51, 144, 236, 0.4);
-        }
-
-        .dismiss-btn {
-            padding: 12px 24px;
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--text-secondary);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .dismiss-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
-            color: var(--text-primary);
         }
 
         /* ===== MEDIA QUERIES ===== */
@@ -1142,83 +705,45 @@
             }
             
             .header-title {
-                font-size: 1.3rem;
+                font-size: 1.2rem;
             }
             
             .my-avatar {
-                width: 40px;
-                height: 40px;
-                font-size: 1.1rem;
-            }
-            
-            .user-avatar-small {
-                width: 50px;
-                height: 50px;
-                font-size: 1.2rem;
-            }
-            
-            .user-info h3 {
-                font-size: 1.1rem;
+                width: 38px;
+                height: 38px;
             }
             
             .call-avatar-large {
-                width: 160px;
-                height: 160px;
-                font-size: 4rem;
+                width: 120px;
+                height: 120px;
+                font-size: 3rem;
             }
             
             .call-name {
-                font-size: 1.8rem;
+                font-size: 1.4rem;
             }
             
             .call-status-text {
-                font-size: 1.2rem;
+                font-size: 1rem;
             }
             
             .timer {
-                font-size: 3.5rem;
-            }
-            
-            .video-preview {
-                width: 180px;
-                height: 135px;
-                top: 90px;
-                right: 15px;
+                font-size: 1.6rem;
             }
             
             .call-btn {
-                width: 65px;
-                height: 65px;
-                font-size: 1.7rem;
-            }
-            
-            .call-bottom {
-                gap: 25px;
-            }
-            
-            .flip-camera-btn {
                 width: 55px;
                 height: 55px;
                 font-size: 1.3rem;
-                top: 20px;
-                right: 20px;
             }
             
             .profile-avatar-container {
-                width: 170px;
-                height: 170px;
+                width: 100px;
+                height: 100px;
             }
             
             .profile-avatar-placeholder {
-                font-size: 4rem;
-            }
-            
-            .profile-actions {
-                flex-direction: column;
-            }
-            
-            .logout-btn {
-                padding: 18px;
+                font-size: 2.5rem;
             }
         }
 
@@ -1228,143 +753,55 @@
             }
             
             .header-title {
-                font-size: 1.2rem;
+                font-size: 1.1rem;
             }
             
             .my-avatar {
-                width: 38px;
-                height: 38px;
-                font-size: 1rem;
+                width: 36px;
+                height: 36px;
             }
             
             .user-item {
-                padding: 14px 16px;
+                padding: 12px;
             }
             
             .user-avatar-small {
-                width: 46px;
-                height: 46px;
+                width: 45px;
+                height: 45px;
                 font-size: 1.1rem;
-                margin-right: 14px;
+                margin-right: 12px;
             }
             
             .user-info h3 {
                 font-size: 1rem;
             }
             
-            .user-info p {
-                font-size: 0.9rem;
-            }
-            
             .call-avatar-large {
-                width: 140px;
-                height: 140px;
-                font-size: 3.5rem;
-                margin-bottom: 25px;
+                width: 100px;
+                height: 100px;
+                font-size: 2.5rem;
             }
             
             .call-name {
-                font-size: 1.6rem;
-            }
-            
-            .call-status-text {
-                font-size: 1.1rem;
+                font-size: 1.3rem;
             }
             
             .timer {
-                font-size: 3rem;
-            }
-            
-            .video-preview {
-                width: 150px;
-                height: 112px;
-                top: 80px;
-                right: 12px;
-            }
-            
-            .toggle-camera-badge {
-                font-size: 0.75rem;
-                padding: 6px 12px;
-            }
-            
-            .call-btn {
-                width: 60px;
-                height: 60px;
-                font-size: 1.5rem;
-            }
-            
-            .call-bottom {
-                gap: 20px;
-            }
-            
-            .flip-camera-btn {
-                width: 50px;
-                height: 50px;
-                font-size: 1.2rem;
-                top: 15px;
-                right: 15px;
-            }
-            
-            .profile-avatar-container {
-                width: 150px;
-                height: 150px;
-            }
-            
-            .profile-avatar-placeholder {
-                font-size: 3.5rem;
-            }
-            
-            .profile-title {
-                font-size: 1.6rem;
-            }
-            
-            .change-photo-btn {
-                padding: 12px 24px;
-                font-size: 1rem;
-            }
-            
-            .profile-input {
-                padding: 16px;
-            }
-            
-            .save-btn, .logout-btn {
-                padding: 18px;
-                font-size: 1.1rem;
-            }
-            
-            .notification-toast {
-                padding: 14px 24px;
-                font-size: 0.95rem;
-                max-width: 95%;
-            }
-            
-            .install-prompt {
-                right: 15px;
-                left: 15px;
-                max-width: none;
-            }
-        }
-
-        @media (max-width: 360px) {
-            .call-avatar-large {
-                width: 120px;
-                height: 120px;
-                font-size: 3rem;
-            }
-            
-            .video-preview {
-                width: 130px;
-                height: 98px;
-            }
-            
-            .call-btn {
-                width: 55px;
-                height: 55px;
                 font-size: 1.4rem;
             }
             
-            .call-bottom {
-                gap: 15px;
+            .call-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+            
+            .call-controls, .incoming-controls {
+                gap: 20px;
+            }
+            
+            .profile-title {
+                font-size: 1.3rem;
             }
         }
     </style>
@@ -1373,12 +810,12 @@
     <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="spinner"></div>
-        <p class="loading-text" id="loadingText">Conectando al servidor...</p>
+        <p class="loading-text" id="loadingText">Conectando...</p>
         <div id="retryButtonContainer" style="display: none; margin-top: 20px;">
-            <button id="retryConnection" style="background: var(--accent); color: white; border: none; padding: 12px 24px; border-radius: 10px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
-                <i class="fas fa-redo"></i> Reintentar conexión
+            <button id="retryConnection" style="background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-redo"></i> Reintentar
             </button>
-            <button id="goToLogin" style="background: transparent; color: var(--accent); border: 1px solid var(--accent); padding: 12px 24px; border-radius: 10px; cursor: pointer; font-size: 1rem; margin-left: 12px; display: flex; align-items: center; gap: 8px;">
+            <button id="goToLogin" style="background: transparent; color: var(--accent); border: 1px solid var(--accent); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; margin-left: 10px; display: flex; align-items: center; gap: 8px;">
                 <i class="fas fa-sign-in-alt"></i> Volver a login
             </button>
         </div>
@@ -1392,10 +829,10 @@
 
     <!-- Main Header -->
     <header class="app-header">
-        <div class="header-title">WebRTC Calls</div>
+        <div class="header-title">Llamadas WebRTC</div>
         <div class="my-avatar-container" id="myAvatarContainer" title="Mi perfil">
             <div class="my-avatar" id="myAvatar">U</div>
-            <div class="status-indicator offline" id="myStatusIndicator"></div>
+            <div class="status-indicator" id="myStatusIndicator"></div>
         </div>
     </header>
 
@@ -1404,7 +841,7 @@
         <div class="users-list" id="usersList">
             <div class="loading-users">
                 <div class="spinner"></div>
-                <p>Cargando usuarios disponibles...</p>
+                <p>Cargando usuarios...</p>
             </div>
         </div>
     </main>
@@ -1414,56 +851,31 @@
         <div class="call-top">
             <div class="call-avatar-large" id="callAvatarLarge">U</div>
             <div class="call-name" id="callPeerName">Usuario</div>
-            <div class="call-status-text" id="callStatusText">Llamando...</div>
+            <div class="call-status-text" id="callStatusText">Conectando...</div>
             <div class="timer" id="timer">00:00</div>
-        </div>
-
-        <!-- Remote Video -->
-        <div class="video-container" id="videoContainer">
-            <video id="remoteVideo" autoplay playsinline></video>
-        </div>
-
-        <!-- Local Video Preview -->
-        <div class="video-preview" id="videoPreview">
-            <video id="localVideoPreview" autoplay playsinline muted></video>
-            <div class="toggle-camera-badge" id="cameraBadge">
-                <i class="fas fa-camera"></i>
-                <span>Tu cámara</span>
-            </div>
-        </div>
-
-        <!-- Flip Camera Button -->
-        <button class="flip-camera-btn" id="flipCamera" title="Voltear cámara">
-            <i class="fas fa-camera-rotate"></i>
-        </button>
-
-        <!-- Call Controls (hidden until call is active) -->
-        <div class="call-controls-container" id="callControls">
-            <div class="call-bottom">
-                <button class="call-btn" id="toggleMic" title="Silenciar micrófono">
-                    <i class="fas fa-microphone"></i>
-                    <span class="call-btn-label">Micrófono</span>
-                </button>
+            
+            <!-- Botón de colgar siempre visible -->
+            <div class="call-controls" id="endCallContainer" style="margin-top: 30px;">
                 <button class="call-btn end" id="endCall" title="Finalizar llamada">
                     <i class="fas fa-phone-slash"></i>
-                    <span class="call-btn-label">Colgar</span>
-                </button>
-                <button class="call-btn" id="toggleCamera" title="Apagar cámara">
-                    <i class="fas fa-video"></i>
-                    <span class="call-btn-label">Cámara</span>
                 </button>
             </div>
         </div>
 
-        <!-- Incoming Call Controls -->
+        <!-- Controles adicionales (micrófono) -->
+        <div class="call-controls" id="callControls">
+            <button class="call-btn" id="toggleMic" title="Silenciar micrófono">
+                <i class="fas fa-microphone"></i>
+            </button>
+        </div>
+
+        <!-- Controles para llamada entrante -->
         <div class="incoming-controls" id="incomingControls">
             <button class="call-btn end" id="rejectCall" title="Rechazar llamada">
                 <i class="fas fa-phone-slash"></i>
-                <span class="call-btn-label">Rechazar</span>
             </button>
             <button class="call-btn accept" id="acceptCall" title="Aceptar llamada">
                 <i class="fas fa-phone"></i>
-                <span class="call-btn-label">Aceptar</span>
             </button>
         </div>
     </div>
@@ -1483,7 +895,7 @@
                 <div class="profile-avatar-placeholder" id="profileAvatarPlaceholder">U</div>
             </div>
             <button class="change-photo-btn" id="changePhotoBtn">
-                <i class="fas fa-camera"></i> Cambiar foto de perfil
+                <i class="fas fa-camera"></i> Cambiar foto
             </button>
             <input type="file" id="profilePhotoInput" accept="image/*" style="display:none;">
         </div>
@@ -1493,8 +905,8 @@
                 <label for="profileNameInput">
                     <i class="fas fa-user"></i> Nombre de usuario
                 </label>
-                <input type="text" class="profile-input" id="profileNameInput" placeholder="Tu nombre de usuario" value="">
-                <span class="form-note">Este es el nombre que verán otros usuarios</span>
+                <input type="text" class="profile-input" id="profileNameInput" placeholder="Tu nombre" value="">
+                <span class="form-note">Mínimo 3 caracteres</span>
             </div>
             
             <div class="form-group">
@@ -1502,12 +914,12 @@
                     <i class="fas fa-lock"></i> Contraseña actual
                 </label>
                 <div class="password-container">
-                    <input type="password" class="profile-input" id="profileCurrentPassword" placeholder="Para cambiar tu contraseña">
+                    <input type="password" class="profile-input" id="profileCurrentPassword" placeholder="Para cambios">
                     <button type="button" class="toggle-password-btn" data-target="profileCurrentPassword">
                         <i class="fas fa-eye"></i>
                     </button>
                 </div>
-                <span class="form-note">Solo necesaria si cambias la contraseña</span>
+                <span class="form-note">Solo si cambias la contraseña</span>
             </div>
             
             <div class="form-group">
@@ -1515,7 +927,7 @@
                     <i class="fas fa-key"></i> Nueva contraseña
                 </label>
                 <div class="password-container">
-                    <input type="password" class="profile-input" id="profileNewPassword" placeholder="Nueva contraseña (opcional)">
+                    <input type="password" class="profile-input" id="profileNewPassword" placeholder="Nueva (opcional)">
                     <button type="button" class="toggle-password-btn" data-target="profileNewPassword">
                         <i class="fas fa-eye"></i>
                     </button>
@@ -1524,10 +936,10 @@
             
             <div class="form-group">
                 <label for="profileConfirmPassword">
-                    <i class="fas fa-check-circle"></i> Confirmar contraseña
+                    <i class="fas fa-check-circle"></i> Confirmar
                 </label>
                 <div class="password-container">
-                    <input type="password" class="profile-input" id="profileConfirmPassword" placeholder="Repite la nueva contraseña">
+                    <input type="password" class="profile-input" id="profileConfirmPassword" placeholder="Repetir nueva">
                     <button type="button" class="toggle-password-btn" data-target="profileConfirmPassword">
                         <i class="fas fa-eye"></i>
                     </button>
@@ -1536,7 +948,7 @@
             
             <div class="profile-actions">
                 <button class="save-btn" id="saveProfileBtn" disabled>
-                    <i class="fas fa-save"></i> Guardar cambios
+                    <i class="fas fa-save"></i> Guardar
                 </button>
                 <button class="logout-btn" id="logoutBtn">
                     <i class="fas fa-sign-out-alt"></i> Cerrar sesión
@@ -1546,33 +958,9 @@
     </div>
 
     <!-- Notification Toast -->
-    <div class="notification-toast" id="notificationToast">
-        <i class="fas fa-info-circle"></i>
-        <span id="notificationText"></span>
-    </div>
-
-    <!-- Install Prompt -->
-    <div class="install-prompt" id="installPrompt">
-        <div class="install-prompt-header">
-            <div class="install-prompt-icon">
-                <i class="fas fa-video"></i>
-            </div>
-            <div>
-                <h3 style="margin: 0 0 5px 0; font-size: 1.1rem;">Instalar WebRTC Calls</h3>
-                <p style="margin: 0; font-size: 0.9rem; color: var(--text-secondary);">Para mejor experiencia</p>
-            </div>
-        </div>
-        <div class="install-prompt-body">
-            Instala la aplicación para acceder rápidamente y recibir notificaciones de llamadas.
-        </div>
-        <div class="install-prompt-actions">
-            <button class="dismiss-btn" id="dismissInstall">Ahora no</button>
-            <button class="install-btn" id="installBtn">Instalar</button>
-        </div>
-    </div>
+    <div class="notification-toast" id="notificationToast"></div>
 
     <!-- Audio Elements -->
-    <audio id="localAudio" autoplay muted></audio>
     <audio id="remoteAudio" autoplay></audio>
 
     <script>
@@ -1584,13 +972,8 @@
         const ICE_CONFIG = {
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' },
-                { urls: 'stun:stun2.l.google.com:19302' },
-                { urls: 'stun:stun3.l.google.com:19302' },
-                { urls: 'stun:stun4.l.google.com:19302' }
-            ],
-            iceCandidatePoolSize: 10,
-            iceTransportPolicy: 'all'
+                { urls: 'stun:stun1.l.google.com:19302' }
+            ]
         };
 
         // ========== ESTADO DE LA APLICACIÓN ==========
@@ -1598,10 +981,8 @@
             ws: null,
             peer: null,
             localStream: null,
-            videoStream: null,
             userId: '',
             username: '',
-            avatarColor: '#3390ec',
             profilePhoto: null,
             users: [],
             currentCall: { 
@@ -1611,84 +992,72 @@
                 isActive: false, 
                 isInitiator: false,
                 startTime: null,
-                connected: false
+                connected: false,
+                callId: ''
             },
             settings: { 
-                micEnabled: true, 
-                cameraEnabled: false,
-                cameraFacing: 'user',
-                isVideoCall: false,
-                audioOutput: 'default'
+                micEnabled: true
             },
             timerInterval: null,
             callTimeout: null,
             connected: false,
             sessionToken: null,
             reconnectAttempts: 0,
-            maxReconnectAttempts: 10,
-            pingInterval: null,
-            lastPong: Date.now(),
-            mediaPermissionsGranted: localStorage.getItem('media_permissions_granted') === 'true'
+            maxReconnectAttempts: 5
         };
 
-        // ========== UTILIDADES ==========
-        function debounce(func, wait) {
-            let timeout;
-            return function executedFunction(...args) {
-                const later = () => {
-                    clearTimeout(timeout);
-                    func(...args);
-                };
-                clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
-            };
-        }
-
-        function throttle(func, limit) {
-            let inThrottle;
-            return function() {
-                const args = arguments;
-                const context = this;
-                if (!inThrottle) {
-                    func.apply(context, args);
-                    inThrottle = true;
-                    setTimeout(() => inThrottle = false, limit);
-                }
-            };
-        }
-
         // ========== NOTIFICACIONES ==========
-        function showNotification(message, type = 'info', duration = 3000) {
+        function showNotification(message, duration = 3000) {
             const toast = document.getElementById('notificationToast');
-            const text = document.getElementById('notificationText');
-            
-            text.textContent = message;
-            toast.className = 'notification-toast';
-            toast.classList.add(type);
+            toast.textContent = message;
             toast.classList.add('show');
             
-            // Auto-ocultar
             setTimeout(() => {
                 toast.classList.remove('show');
             }, duration);
             
-            console.log(`[Notification:${type}]`, message);
+            console.log(`[Notification] ${message}`);
         }
 
-        // ========== CONEXIÓN WEBSOCKET MEJORADA ==========
+        // ========== MANEJO DE CONEXIÓN ==========
+        function updateConnectionStatus(status, message) {
+            const statusElement = document.getElementById('connectionStatus');
+            const icon = document.getElementById('connectionStatusIcon');
+            const text = document.getElementById('connectionStatusText');
+            const myStatus = document.getElementById('myStatusIndicator');
+            
+            statusElement.className = 'connection-status';
+            statusElement.classList.add(status);
+            
+            if (status === 'connected') {
+                setTimeout(() => {
+                    statusElement.classList.add('show');
+                    setTimeout(() => statusElement.classList.remove('show'), 2000);
+                }, 500);
+                myStatus.className = 'status-indicator online';
+            } else {
+                statusElement.classList.add('show');
+                myStatus.className = 'status-indicator';
+            }
+            
+            text.textContent = message;
+            icon.style.color = status === 'connected' ? '#4caf50' : '#f44336';
+        }
+
+        // ========== WEBSOCKET MANAGER ==========
         const WebSocketManager = {
             connect() {
                 if (!AppState.sessionToken) {
                     console.error('No hay token de sesión');
-                    this.updateConnectionStatus('disconnected', 'No autenticado');
-                    setTimeout(() => this.connect(), 2000);
+                    updateConnectionStatus('disconnected', 'No autenticado');
                     return;
                 }
                 
-                const wsUrl = `${WS_URL}?token=${encodeURIComponent(AppState.sessionToken)}&t=${Date.now()}`;
-                console.log('🔗 Conectando WebSocket:', wsUrl);
+                const wsUrl = `${WS_URL}?token=${encodeURIComponent(AppState.sessionToken)}`;
+                console.log('Conectando WebSocket:', wsUrl);
                 
-                this.updateConnectionStatus('connecting', 'Conectando...');
+                updateConnectionStatus('connecting', 'Conectando...');
+                document.getElementById('loadingText').textContent = 'Conectando al servidor...';
                 
                 try {
                     AppState.ws = new WebSocket(wsUrl);
@@ -1704,22 +1073,14 @@
                     console.log('✅ WebSocket conectado');
                     AppState.connected = true;
                     AppState.reconnectAttempts = 0;
-                    this.updateConnectionStatus('connected', 'Conectado');
+                    updateConnectionStatus('connected', 'Conectado');
                     
-                    // Ocultar loading overlay
-                    document.getElementById('loadingOverlay').classList.add('hidden');
+                    document.getElementById('loadingOverlay').style.display = 'none';
                     
-                    // Iniciar ping/pong
-                    this.startPingInterval();
-                    
-                    // Solicitar usuarios
+                    // Solicitar lista de usuarios
                     setTimeout(() => {
                         this.send('get_users');
-                        this.updateUserStatus();
                     }, 500);
-                    
-                    // Notificar que estamos online
-                    this.send('user_online');
                 };
 
                 AppState.ws.onmessage = (event) => {
@@ -1727,43 +1088,37 @@
                         const data = JSON.parse(event.data);
                         this.handleMessage(data);
                     } catch (error) {
-                        console.error('Error parseando mensaje:', error, event.data);
+                        console.error('Error parseando mensaje:', error);
                     }
                 };
 
                 AppState.ws.onerror = (error) => {
                     console.error('❌ Error WebSocket:', error);
-                    this.updateConnectionStatus('error', 'Error de conexión');
+                    updateConnectionStatus('error', 'Error de conexión');
                 };
 
-                AppState.ws.onclose = (event) => {
-                    console.log('🔌 WebSocket cerrado:', event.code, event.reason);
+                AppState.ws.onclose = () => {
+                    console.log('🔌 WebSocket cerrado');
                     AppState.connected = false;
-                    this.updateConnectionStatus('disconnected', 'Desconectado');
+                    updateConnectionStatus('disconnected', 'Desconectado');
                     
-                    // Limpiar ping interval
-                    if (AppState.pingInterval) {
-                        clearInterval(AppState.pingInterval);
-                        AppState.pingInterval = null;
-                    }
-                    
-                    // Reconectar si no fue un cierre intencional
-                    if (event.code !== 1000 && event.code !== 1001) {
+                    if (!AppState.ws.closeInitiated) {
                         this.handleReconnection();
                     }
                 };
             },
 
             handleMessage(data) {
-                console.log('📥 Mensaje recibido:', data.type, data);
+                console.log('📥 Mensaje:', data.type);
                 
                 switch(data.type) {
                     case 'registered':
-                        this.handleRegistered(data);
+                        console.log('✅ Registrado en servidor');
                         break;
                         
                     case 'user_list':
-                        this.handleUserList(data);
+                        AppState.users = data.users || [];
+                        updateUserList(AppState.users);
                         break;
                         
                     case 'user_connected':
@@ -1774,12 +1129,13 @@
                         this.handleUserDisconnected(data);
                         break;
                         
-                    case 'user_online':
-                        this.handleUserOnline(data);
-                        break;
-                        
                     case 'incoming_call':
                         this.handleIncomingCall(data);
+                        break;
+                        
+                    case 'call_initiated':
+                        console.log('✅ Llamada iniciada:', data.callId);
+                        AppState.currentCall.callId = data.callId;
                         break;
                         
                     case 'call_accepted':
@@ -1787,61 +1143,32 @@
                         break;
                         
                     case 'call_declined':
-                        this.handleCallDeclined(data);
+                        showNotification('Llamada rechazada', 3000);
+                        endCall();
                         break;
                         
                     case 'call_ended':
-                        this.handleCallEnded(data);
+                        showNotification('Llamada finalizada', 3000);
+                        endCall();
                         break;
                         
                     case 'webrtc_signal':
                         this.handleWebRTCSignal(data);
                         break;
                         
-                    case 'pong':
-                        AppState.lastPong = Date.now();
-                        break;
-                        
                     case 'error':
-                        showNotification(data.message || 'Error', 'error', 5000);
+                        showNotification(data.message || 'Error', 5000);
                         break;
-                        
-                    default:
-                        console.warn('Tipo de mensaje desconocido:', data.type);
                 }
-            },
-
-            handleRegistered(data) {
-                console.log('✅ Registrado en servidor:', data.userId);
-                // Actualizar estado local si es diferente
-                if (data.userId !== AppState.userId) {
-                    AppState.userId = data.userId;
-                    AppState.username = data.username;
-                    AppState.profilePhoto = data.avatar_url;
-                    updateAvatarDisplay();
-                }
-                
-                // Actualizar lista de usuarios si viene incluida
-                if (data.onlineUsers) {
-                    AppState.users = data.onlineUsers;
-                    updateUserList(AppState.users);
-                }
-            },
-
-            handleUserList(data) {
-                console.log('👥 Lista de usuarios actualizada:', data.users.length, 'usuarios');
-                AppState.users = data.users || [];
-                updateUserList(AppState.users);
             },
 
             handleUserConnected(data) {
                 console.log('🟢 Usuario conectado:', data.username);
                 
-                // Actualizar o añadir usuario a la lista
+                // Actualizar lista de usuarios
                 const userIndex = AppState.users.findIndex(u => u.id === data.userId);
                 if (userIndex >= 0) {
                     AppState.users[userIndex].is_connected = true;
-                    AppState.users[userIndex].status = 'disponible';
                 } else {
                     AppState.users.push({
                         id: data.userId,
@@ -1853,31 +1180,22 @@
                 }
                 
                 updateUserList(AppState.users);
-                showNotification(`${data.username} se ha conectado`, 'success', 2000);
             },
 
             handleUserDisconnected(data) {
                 console.log('🔴 Usuario desconectado:', data.userId);
                 
-                // Actualizar usuario en la lista
                 const userIndex = AppState.users.findIndex(u => u.id === data.userId);
                 if (userIndex >= 0) {
                     AppState.users[userIndex].is_connected = false;
-                    AppState.users[userIndex].status = 'desconectado';
-                    
                     updateUserList(AppState.users);
                     
-                    // Notificar si estábamos en llamada con este usuario
+                    // Si estamos en llamada con este usuario, terminar
                     if (AppState.currentCall.peerId === data.userId && AppState.currentCall.isActive) {
-                        showNotification(`${AppState.users[userIndex].username} se ha desconectado`, 'error');
+                        showNotification('Usuario desconectado', 3000);
                         endCall();
                     }
                 }
-            },
-
-            handleUserOnline(data) {
-                // Usuario marcado como online por el servidor
-                console.log('📱 Usuario online:', data.userId);
             },
 
             handleIncomingCall(data) {
@@ -1889,35 +1207,31 @@
                     peerAvatar: data.callerAvatar,
                     isActive: false,
                     isInitiator: false,
-                    connected: false
+                    connected: false,
+                    callId: data.callId
                 };
                 
-                // Mostrar overlay de llamada
+                // Mostrar overlay
                 document.getElementById('callOverlay').classList.add('active');
                 document.getElementById('incomingControls').classList.add('active');
-                document.getElementById('callControls').classList.remove('active');
+                document.getElementById('callControls').classList.add('hidden');
+                document.getElementById('endCallContainer').classList.add('hidden');
                 
-                // Actualizar información visual
+                // Actualizar UI
                 document.getElementById('callPeerName').textContent = data.callerName;
                 document.getElementById('callStatusText').textContent = 'Llamada entrante...';
-                document.getElementById('callStatusText').classList.remove('connecting');
                 
                 // Actualizar avatar
                 updateCallAvatar(data.callerAvatar, data.callerName);
                 
-                // Sonido de llamada (opcional)
-                playIncomingCallSound();
-                
-                // Notificación
-                showNotification(`Llamada de ${data.callerName}`, 'success');
+                showNotification(`Llamada de ${data.callerName}`);
             },
 
             handleCallAccepted(data) {
-                console.log('✅ Llamada aceptada por:', data.calleeId);
+                console.log('✅ Llamada aceptada');
                 
                 if (AppState.currentCall.peerId === data.calleeId) {
                     document.getElementById('callStatusText').textContent = 'Conectando...';
-                    document.getElementById('callStatusText').classList.add('connecting');
                     
                     // Iniciar WebRTC
                     setTimeout(() => {
@@ -1926,88 +1240,11 @@
                 }
             },
 
-            handleCallDeclined(data) {
-                console.log('❌ Llamada rechazada por:', data.calleeId);
-                
-                if (AppState.currentCall.peerId === data.calleeId) {
-                    showNotification('Llamada rechazada', 'error');
-                    endCall();
-                }
-            },
-
-            handleCallEnded(data) {
-                console.log('📴 Llamada finalizada por:', data.from);
-                
-                if (AppState.currentCall.peerId === data.from) {
-                    showNotification('Llamada finalizada', 'info');
-                    endCall();
-                }
-            },
-
             handleWebRTCSignal(data) {
-                console.log('📡 Señal WebRTC recibida de:', data.from);
+                console.log('📡 Señal WebRTC recibida');
                 
                 if (AppState.peer && data.signal) {
                     AppState.peer.signal(data.signal);
-                }
-            },
-
-            startPingInterval() {
-                if (AppState.pingInterval) {
-                    clearInterval(AppState.pingInterval);
-                }
-                
-                AppState.pingInterval = setInterval(() => {
-                    if (AppState.ws && AppState.ws.readyState === WebSocket.OPEN) {
-                        this.send('ping');
-                        
-                        // Verificar última respuesta pong
-                        const timeSinceLastPong = Date.now() - AppState.lastPong;
-                        if (timeSinceLastPong > 30000) { // 30 segundos
-                            console.warn('Sin respuesta pong por', timeSinceLastPong, 'ms');
-                            this.updateConnectionStatus('reconnecting', 'Reconectando...');
-                        }
-                    }
-                }, 10000); // Ping cada 10 segundos
-            },
-
-            updateConnectionStatus(status, message) {
-                const statusElement = document.getElementById('connectionStatus');
-                const icon = document.getElementById('connectionStatusIcon');
-                const text = document.getElementById('connectionStatusText');
-                
-                statusElement.className = 'connection-status';
-                statusElement.classList.add(status);
-                
-                // Mostrar/ocultar
-                if (status === 'connected') {
-                    setTimeout(() => statusElement.classList.add('show'), 500);
-                    setTimeout(() => statusElement.classList.remove('show'), 3000);
-                } else {
-                    statusElement.classList.add('show');
-                }
-                
-                // Actualizar icono y texto
-                text.textContent = message;
-                
-                switch(status) {
-                    case 'connected':
-                        icon.className = 'fas fa-circle';
-                        icon.style.color = '#4caf50';
-                        document.getElementById('myStatusIndicator').className = 'status-indicator';
-                        break;
-                    case 'connecting':
-                    case 'reconnecting':
-                        icon.className = 'fas fa-circle';
-                        icon.style.color = '#ff9800';
-                        document.getElementById('myStatusIndicator').className = 'status-indicator connecting';
-                        break;
-                    case 'disconnected':
-                    case 'error':
-                        icon.className = 'fas fa-circle';
-                        icon.style.color = '#f44336';
-                        document.getElementById('myStatusIndicator').className = 'status-indicator offline';
-                        break;
                 }
             },
 
@@ -2015,17 +1252,17 @@
                 AppState.reconnectAttempts++;
                 
                 if (AppState.reconnectAttempts <= AppState.maxReconnectAttempts) {
-                    const delay = Math.min(1000 * Math.pow(1.5, AppState.reconnectAttempts - 1), 10000);
-                    const attemptText = `Reconectando... (Intento ${AppState.reconnectAttempts}/${AppState.maxReconnectAttempts})`;
+                    const delay = Math.min(1000 * AppState.reconnectAttempts, 5000);
+                    const attemptText = `Reconectando... (${AppState.reconnectAttempts}/${AppState.maxReconnectAttempts})`;
                     
-                    this.updateConnectionStatus('reconnecting', attemptText);
+                    updateConnectionStatus('connecting', attemptText);
                     document.getElementById('loadingText').textContent = attemptText;
                     
-                    console.log(`↻ Reintento ${AppState.reconnectAttempts} en ${delay}ms`);
+                    console.log(`Reintento ${AppState.reconnectAttempts} en ${delay}ms`);
                     
                     setTimeout(() => this.connect(), delay);
                 } else {
-                    this.updateConnectionStatus('disconnected', 'No se pudo conectar');
+                    updateConnectionStatus('disconnected', 'No se pudo conectar');
                     document.getElementById('loadingText').textContent = 'No se pudo conectar al servidor';
                     document.getElementById('retryButtonContainer').style.display = 'flex';
                 }
@@ -2036,304 +1273,122 @@
                     try {
                         const message = JSON.stringify({ type, ...payload });
                         AppState.ws.send(message);
-                        console.log('📤 Mensaje enviado:', type, payload);
+                        console.log('📤 Mensaje enviado:', type);
                         return true;
                     } catch (error) {
                         console.error('Error enviando mensaje:', error);
                         return false;
                     }
                 } else {
-                    console.warn('WebSocket no está conectado, no se puede enviar:', type);
+                    console.warn('WebSocket no conectado');
                     return false;
                 }
             }
         };
 
-        // ========== WEBRTC MANAGER MEJORADO ==========
+        // ========== WEBRTC MANAGER ==========
         const WebRTCManager = {
             async start(isInitiator) {
                 console.log('🚀 Iniciando WebRTC, iniciador:', isInitiator);
                 
                 try {
-                    // Configuración de medios optimizada
+                    // Solo audio
                     const constraints = {
                         audio: {
                             echoCancellation: true,
                             noiseSuppression: true,
-                            autoGainControl: true,
-                            channelCount: 1
-                        },
-                        video: AppState.settings.cameraEnabled ? {
-                            facingMode: AppState.settings.cameraFacing,
-                            width: { ideal: 1280, max: 1920 },
-                            height: { ideal: 720, max: 1080 },
-                            frameRate: { ideal: 30, max: 60 }
-                        } : false
+                            autoGainControl: true
+                        }
                     };
                     
-                    console.log('🎥 Solicitando permisos con constraints:', constraints);
-                    
-                    // Solicitar medios
                     AppState.localStream = await navigator.mediaDevices.getUserMedia(constraints);
-                    console.log('✅ Medios obtenidos:', AppState.localStream.getTracks().length, 'tracks');
+                    console.log('✅ Audio obtenido');
                     
-                    // Configurar salida de audio si está disponible
-                    const remoteAudio = document.getElementById('remoteAudio');
-                    if ('setSinkId' in remoteAudio) {
-                        try {
-                            await remoteAudio.setSinkId(AppState.settings.audioOutput);
-                        } catch (e) {
-                            console.warn('No se pudo configurar salida de audio:', e);
-                        }
-                    }
-                    
-                    // Configurar cámara local si está activada
-                    if (AppState.settings.cameraEnabled && AppState.localStream.getVideoTracks().length > 0) {
-                        AppState.videoStream = AppState.localStream;
-                        const preview = document.getElementById('localVideoPreview');
-                        preview.srcObject = AppState.localStream;
-                        
-                        // Esperar a que el video esté listo
-                        await new Promise((resolve) => {
-                            if (preview.readyState >= 2) {
-                                resolve();
-                            } else {
-                                preview.onloadedmetadata = resolve;
-                                preview.onloadeddata = resolve;
-                            }
-                        });
-                        
-                        // Mostrar preview
-                        document.getElementById('videoPreview').classList.add('active');
-                        document.getElementById('flipCamera').classList.add('active');
-                        document.getElementById('toggleCamera').innerHTML = '<i class="fas fa-video"></i>';
-                        
-                        console.log('📹 Vista previa de cámara activada');
-                    }
-                    
-                    // Crear peer WebRTC
                     this.createPeer(isInitiator);
                     
                 } catch (err) {
-                    console.error('❌ Error accediendo a dispositivos:', err);
+                    console.error('❌ Error accediendo a micrófono:', err);
                     
-                    let errorMessage = 'Error al acceder a micrófono/cámara';
+                    let errorMessage = 'Error al acceder al micrófono';
                     if (err.name === 'NotAllowedError') {
-                        errorMessage = 'Permisos denegados. Por favor, permite acceso a micrófono y cámara en la configuración de tu navegador.';
+                        errorMessage = 'Permiso de micrófono denegado';
                     } else if (err.name === 'NotFoundError') {
-                        errorMessage = 'No se encontró cámara o micrófono. Verifica que estén conectados.';
-                    } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-                        errorMessage = 'El dispositivo ya está en uso por otra aplicación.';
-                    } else if (err.name === 'OverconstrainedError') {
-                        errorMessage = 'No se pueden cumplir los requisitos de cámara/micrófono.';
-                    } else if (err.name === 'TypeError') {
-                        errorMessage = 'Navegador no compatible con WebRTC.';
+                        errorMessage = 'No se encontró micrófono';
                     }
                     
-                    showNotification(errorMessage, 'error', 5000);
+                    showNotification(errorMessage, 5000);
                     endCall();
                 }
             },
 
             createPeer(isInitiator) {
-                console.log('🔗 Creando peer WebRTC, iniciador:', isInitiator);
+                console.log('🔗 Creando peer WebRTC');
                 
-                // Configuración optimizada
-                const peerConfig = {
+                AppState.peer = new SimplePeer({
                     initiator: isInitiator,
                     stream: AppState.localStream,
                     config: ICE_CONFIG,
-                    trickle: true,
-                    reconnectTimer: 2000,
-                    sdpTransform: (sdp) => {
-                        // Optimizar SDP para mejor calidad/rendimiento
-                        return sdp
-                            .replace(/a=fmtp:\d+ .*\r\n/g, '')
-                            .replace(/a=rtcp-fb:\d+ .*\r\n/g, '');
-                    }
-                };
-                
-                AppState.peer = new SimplePeer(peerConfig);
+                    trickle: true
+                });
 
                 AppState.peer.on('signal', (signal) => {
-                    console.log('📡 Señal WebRTC generada:', signal.type);
+                    console.log('📡 Señal WebRTC generada');
                     
-                    // Enviar señal con reintentos inteligentes
-                    this.sendSignalWithRetry(signal);
+                    WebSocketManager.send('webrtc_signal', { 
+                        targetId: AppState.currentCall.peerId,
+                        signal: signal 
+                    });
                 });
 
                 AppState.peer.on('stream', (remoteStream) => {
-                    console.log('🎬✅ Stream remoto recibido!');
-                    
+                    console.log('🎧 Audio remoto recibido!');
                     this.handleRemoteStream(remoteStream);
                 });
 
-                AppState.peer.on('track', (track, stream) => {
-                    console.log('🎵 Track recibido:', track.kind);
-                    // Manejo individual de tracks (audio/video separados)
-                });
-
                 AppState.peer.on('connect', () => {
-                    console.log('✅ Peer conectado via data channel');
+                    console.log('✅ Peer conectado');
                     AppState.currentCall.connected = true;
-                    showNotification('Conexión establecida', 'success', 2000);
-                });
-
-                AppState.peer.on('data', (data) => {
-                    console.log('📨 Datos recibidos via data channel:', data);
-                    // Para mensajes de texto durante la llamada
+                    
+                    document.getElementById('callStatusText').textContent = 'En llamada';
+                    document.getElementById('incomingControls').classList.remove('active');
+                    document.getElementById('callControls').classList.remove('hidden');
+                    document.getElementById('endCallContainer').classList.remove('hidden');
+                    
+                    // Iniciar timer
+                    AppState.currentCall.startTime = Date.now();
+                    startTimer();
+                    
+                    showNotification('Conectado', 2000);
                 });
 
                 AppState.peer.on('error', (err) => {
-                    console.error('❌ Error en peer WebRTC:', err);
-                    showNotification(`Error WebRTC: ${err.message || 'Desconocido'}`, 'error', 5000);
+                    console.error('❌ Error en peer:', err);
+                    showNotification('Error de conexión', 3000);
                     endCall();
                 });
 
                 AppState.peer.on('close', () => {
                     console.log('🔒 Peer cerrado');
-                    if (AppState.currentCall.isActive) {
-                        showNotification('Conexión perdida', 'warning');
-                        endCall();
-                    }
+                    endCall();
                 });
             },
 
             handleRemoteStream(remoteStream) {
-                const remoteVideo = document.getElementById('remoteVideo');
                 const remoteAudio = document.getElementById('remoteAudio');
-                
-                // Configurar video remoto
-                remoteVideo.srcObject = remoteStream;
-                
-                // Extraer solo audio para el elemento audio
-                const audioStream = new MediaStream(remoteStream.getAudioTracks());
-                remoteAudio.srcObject = audioStream;
-                
-                // Eventos para cuando los medios estén listos
-                remoteVideo.onloadedmetadata = () => {
-                    console.log('🎥 Video remoto cargado');
-                    remoteVideo.play().catch(e => console.warn('Auto-play video prevenido:', e));
-                    
-                    // Mostrar video container
-                    document.getElementById('videoContainer').classList.add('active');
-                };
+                remoteAudio.srcObject = remoteStream;
                 
                 remoteAudio.onloadedmetadata = () => {
-                    console.log('🔊 Audio remoto cargado');
-                    remoteAudio.play().catch(e => console.warn('Auto-play audio prevenido:', e));
+                    console.log('🔊 Audio remoto listo');
+                    remoteAudio.play().catch(e => console.warn('Auto-play prevenido:', e));
                 };
                 
-                // Actualizar estado de la llamada
                 AppState.currentCall.isActive = true;
-                AppState.currentCall.connected = true;
-                
-                document.getElementById('callStatusText').textContent = 'En llamada';
-                document.getElementById('callStatusText').classList.remove('connecting');
-                document.getElementById('callStatusText').style.opacity = '0.7';
-                
-                // Mostrar controles de llamada
-                this.showCallControls();
-                
-                // Iniciar timer
-                AppState.currentCall.startTime = Date.now();
-                startTimer();
-                
-                // Notificación
-                showNotification('✅ Conexión establecida', 'success', 2000);
-                
-                // Actualizar interfaz periódicamente
-                this.startInterfaceUpdates();
-            },
-
-            showCallControls() {
-                const controls = document.getElementById('callControls');
-                controls.classList.add('active');
-                
-                // Animar entrada de controles
-                setTimeout(() => {
-                    const buttons = controls.querySelectorAll('.call-btn');
-                    buttons.forEach((btn, index) => {
-                        setTimeout(() => {
-                            btn.style.opacity = '0';
-                            btn.style.transform = 'translateY(20px)';
-                            
-                            setTimeout(() => {
-                                btn.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
-                                btn.style.opacity = '1';
-                                btn.style.transform = 'translateY(0)';
-                            }, 10);
-                        }, index * 100);
-                    });
-                }, 300);
-            },
-
-            startInterfaceUpdates() {
-                // Actualizar periodicamente la interfaz durante la llamada
-                if (AppState.interfaceUpdateInterval) {
-                    clearInterval(AppState.interfaceUpdateInterval);
-                }
-                
-                AppState.interfaceUpdateInterval = setInterval(() => {
-                    if (AppState.currentCall.isActive) {
-                        // Actualizar calidad de conexión (simulado)
-                        this.updateConnectionQuality();
-                        
-                        // Verificar que los streams sigan activos
-                        this.checkStreams();
-                    }
-                }, 5000);
-            },
-
-            updateConnectionQuality() {
-                // Aquí podrías implementar métricas reales de calidad
-                // Por ahora es un placeholder
-                const quality = Math.random() > 0.1 ? 'Buena' : 'Regular';
-                // document.getElementById('callStatusText').textContent = `En llamada • ${quality}`;
-            },
-
-            checkStreams() {
-                if (AppState.localStream) {
-                    const videoTracks = AppState.localStream.getVideoTracks();
-                    const audioTracks = AppState.localStream.getAudioTracks();
-                    
-                    if (videoTracks.length > 0 && !videoTracks[0].enabled && AppState.settings.cameraEnabled) {
-                        console.warn('Cámara local desactivada inesperadamente');
-                    }
-                    
-                    if (audioTracks.length > 0 && !audioTracks[0].enabled && AppState.settings.micEnabled) {
-                        console.warn('Micrófono local desactivado inesperadamente');
-                    }
-                }
-            },
-
-            async sendSignalWithRetry(signal, retries = 5) {
-                for (let i = 0; i < retries; i++) {
-                    if (WebSocketManager.send('webrtc_signal', {
-                        targetId: AppState.currentCall.peerId,
-                        signal: signal
-                    })) {
-                        console.log(`📤 Señal enviada (intento ${i + 1}/${retries})`);
-                        return true;
-                    }
-                    
-                    // Esperar antes de reintentar (backoff exponencial)
-                    if (i < retries - 1) {
-                        const delay = 1000 * Math.pow(1.5, i);
-                        console.log(`⏳ Esperando ${delay}ms antes de reintentar...`);
-                        await new Promise(resolve => setTimeout(resolve, delay));
-                    }
-                }
-                
-                console.error('❌ No se pudo enviar la señal después de', retries, 'intentos');
-                showNotification('Error de conexión con el otro usuario', 'error', 3000);
-                return false;
             }
         };
 
-        // ========== MANEJO DE USUARIOS ==========
+        // ========== LISTA DE USUARIOS ==========
         function updateUserList(users) {
-            console.log('🔄 Actualizando lista de usuarios:', users.length);
+            console.log('🔄 Actualizando lista:', users.length);
             
             const list = document.getElementById('usersList');
             
@@ -2341,10 +1396,7 @@
                 list.innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-users"></i>
-                        <p>No hay otros usuarios disponibles</p>
-                        <p style="margin-top: 10px; font-size: 0.9rem; opacity: 0.7;">
-                            Invita a alguien a registrarse
-                        </p>
+                        <p>No hay usuarios disponibles</p>
                     </div>
                 `;
                 return;
@@ -2357,10 +1409,7 @@
                 list.innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-user-friends"></i>
-                        <p>Eres el único usuario conectado</p>
-                        <p style="margin-top: 10px; font-size: 0.9rem; opacity: 0.7;">
-                            Espera a que otros se conecten
-                        </p>
+                        <p>Eres el único conectado</p>
                     </div>
                 `;
                 return;
@@ -2373,14 +1422,12 @@
                 const isOnline = user.is_connected;
                 const status = isOnline ? 'Disponible' : 'Desconectado';
                 const statusClass = isOnline ? 'online' : 'offline';
-                const avatarClass = isOnline ? 'available' : 'offline';
                 
-                // Avatar HTML
                 let avatarHtml;
                 if (user.avatar_url) {
-                    avatarHtml = `<img src="${user.avatar_url}" alt="${user.username}" onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\\'background: linear-gradient(135deg, #3390ec, #5ba8f5); display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; border-radius: 50%; color: white; font-weight: bold; font-size: 1.4rem;\\'>${initials}</div>';">`;
+                    avatarHtml = `<img src="${user.avatar_url}" alt="${user.username}">`;
                 } else {
-                    avatarHtml = `<div style="background: linear-gradient(135deg, #3390ec, #5ba8f5); display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; border-radius: 50%; color: white; font-weight: bold; font-size: 1.4rem;">${initials}</div>`;
+                    avatarHtml = `<div style="background: linear-gradient(135deg, #3390ec, #5ba8f5); display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; border-radius: 50%; color: white; font-weight: bold; font-size: 1.2rem;">${initials}</div>`;
                 }
                 
                 html += `
@@ -2388,7 +1435,7 @@
                          data-id="${user.id}" 
                          data-username="${user.username}"
                          data-avatar="${user.avatar_url || ''}">
-                        <div class="user-avatar-small ${avatarClass}">
+                        <div class="user-avatar-small">
                             ${avatarHtml}
                         </div>
                         <div class="user-info">
@@ -2407,12 +1454,10 @@
             
             list.innerHTML = html;
             
-            // Agregar event listeners
+            // Event listeners
             document.querySelectorAll('.user-item:not(.disabled)').forEach(item => {
                 item.addEventListener('click', handleUserClick);
             });
-            
-            console.log('✅ Lista de usuarios actualizada');
         }
 
         function handleUserClick(event) {
@@ -2421,66 +1466,64 @@
             const peerName = item.dataset.username;
             const peerAvatar = item.dataset.avatar;
             
-            console.log('📞 Iniciando llamada a:', peerName, targetId);
+            console.log('📞 Llamando a:', peerName);
             
-            // Actualizar estado
             AppState.currentCall = {
                 peerId: targetId,
                 peerName: peerName,
                 peerAvatar: peerAvatar,
                 isActive: false,
                 isInitiator: true,
-                connected: false
+                connected: false,
+                callId: ''
             };
             
-            // Mostrar overlay de llamada
+            // Mostrar overlay
             document.getElementById('callOverlay').classList.add('active');
             document.getElementById('incomingControls').classList.remove('active');
-            document.getElementById('callControls').classList.remove('active');
+            document.getElementById('callControls').classList.add('hidden');
+            document.getElementById('endCallContainer').classList.remove('hidden');
             
-            // Actualizar información visual
+            // Actualizar UI
             document.getElementById('callPeerName').textContent = peerName;
             document.getElementById('callStatusText').textContent = 'Llamando...';
-            document.getElementById('callStatusText').classList.add('connecting');
             
             // Actualizar avatar
             updateCallAvatar(peerAvatar, peerName);
             
-            // Enviar solicitud de llamada
+            // Enviar solicitud
             if (WebSocketManager.send('call_request', { targetId })) {
-                // Iniciar WebRTC después de un breve delay
+                // Iniciar WebRTC después de delay
                 setTimeout(() => {
                     WebRTCManager.start(true);
                 }, 1000);
                 
-                // Timeout para llamada no respondida
+                // Timeout si no responde
                 AppState.callTimeout = setTimeout(() => {
                     if (!AppState.currentCall.isActive && !AppState.currentCall.connected) {
-                        showNotification('Llamada no respondida', 'warning');
+                        showNotification('No responde', 3000);
                         endCall();
                     }
-                }, 30000); // 30 segundos
+                }, 30000);
             } else {
-                showNotification('Error al iniciar llamada', 'error');
+                showNotification('Error al llamar', 3000);
                 endCall();
             }
         }
 
         // ========== MANEJO DE AVATARES ==========
         function updateAvatarDisplay() {
-            console.log('🔄 Actualizando avatares...');
-            
             // Avatar en header
             const myAvatar = document.getElementById('myAvatar');
             if (AppState.profilePhoto) {
-                myAvatar.innerHTML = `<img src="${AppState.profilePhoto}" alt="${AppState.username}" onerror="handleAvatarError(this)">`;
+                myAvatar.innerHTML = `<img src="${AppState.profilePhoto}" alt="${AppState.username}">`;
                 myAvatar.style.background = 'none';
             } else {
                 myAvatar.textContent = AppState.username.charAt(0).toUpperCase() || 'U';
-                myAvatar.style.background = `linear-gradient(135deg, ${AppState.avatarColor}, #5ba8f5)`;
+                myAvatar.style.background = `linear-gradient(135deg, #3390ec, #5ba8f5)`;
             }
             
-            // Avatar en modal de perfil
+            // Avatar en perfil
             const profileAvatar = document.getElementById('profileAvatarImg');
             const profilePlaceholder = document.getElementById('profileAvatarPlaceholder');
             
@@ -2494,17 +1537,8 @@
                 profilePlaceholder.textContent = AppState.username.charAt(0).toUpperCase() || 'U';
             }
             
-            // Actualizar nombre en inputs
+            // Nombre en input
             document.getElementById('profileNameInput').value = AppState.username || '';
-        }
-
-        function handleAvatarError(imgElement) {
-            console.warn('Error cargando avatar, usando placeholder');
-            const parent = imgElement.parentElement;
-            const username = AppState.username || 'U';
-            const initial = username.charAt(0).toUpperCase();
-            
-            parent.innerHTML = `<div style="background: linear-gradient(135deg, #3390ec, #5ba8f5); display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; border-radius: 50%; color: white; font-weight: bold; font-size: 1.2rem;">${initial}</div>`;
         }
 
         function updateCallAvatar(avatarUrl, username) {
@@ -2512,13 +1546,13 @@
             const initial = username ? username.charAt(0).toUpperCase() : 'U';
             
             if (avatarUrl) {
-                callAvatar.innerHTML = `<img src="${avatarUrl}" alt="${username}" onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\\'background: linear-gradient(135deg, #3390ec, #5ba8f5); display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; border-radius: 50%; color: white; font-weight: bold; font-size: 4.5rem;\\'>${initial}</div>';">`;
+                callAvatar.innerHTML = `<img src="${avatarUrl}" alt="${username}">`;
             } else {
-                callAvatar.innerHTML = `<div style="background: linear-gradient(135deg, #3390ec, #5ba8f5); display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; border-radius: 50%; color: white; font-weight: bold; font-size: 4.5rem;">${initial}</div>`;
+                callAvatar.innerHTML = `<div style="background: linear-gradient(135deg, #3390ec, #5ba8f5); display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; border-radius: 50%; color: white; font-weight: bold; font-size: 3.5rem;">${initial}</div>`;
             }
         }
 
-        // ========== TIMER DE LLAMADA ==========
+        // ========== TIMER ==========
         function startTimer() {
             if (AppState.timerInterval) {
                 clearInterval(AppState.timerInterval);
@@ -2564,97 +1598,12 @@
             if (AppState.settings.micEnabled) {
                 icon.className = 'fas fa-microphone';
                 button.classList.remove('mic-off');
-                showNotification('Micrófono activado', 'success', 1500);
+                showNotification('Micrófono activado', 1500);
             } else {
                 icon.className = 'fas fa-microphone-slash';
                 button.classList.add('mic-off');
-                showNotification('Micrófono desactivado', 'warning', 1500);
+                showNotification('Micrófono desactivado', 1500);
             }
-        }
-
-        async function toggleCamera() {
-            if (AppState.settings.cameraEnabled) {
-                // Desactivar cámara
-                if (AppState.videoStream) {
-                    AppState.videoStream.getTracks().forEach(track => track.stop());
-                }
-                if (AppState.localStream) {
-                    AppState.localStream.getVideoTracks().forEach(track => AppState.localStream.removeTrack(track));
-                }
-                
-                AppState.settings.cameraEnabled = false;
-                document.getElementById('videoPreview').classList.remove('active');
-                document.getElementById('flipCamera').classList.remove('active');
-                
-                const icon = document.getElementById('toggleCamera').querySelector('i');
-                icon.className = 'fas fa-video-slash';
-                
-                showNotification('Cámara desactivada', 'warning', 1500);
-            } else {
-                // Activar cámara
-                try {
-                    const constraints = {
-                        video: {
-                            facingMode: AppState.settings.cameraFacing,
-                            width: { ideal: 1280 },
-                            height: { ideal: 720 }
-                        }
-                    };
-                    
-                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                    AppState.videoStream = stream;
-                    AppState.settings.cameraEnabled = true;
-                    
-                    document.getElementById('localVideoPreview').srcObject = stream;
-                    document.getElementById('videoPreview').classList.add('active');
-                    document.getElementById('flipCamera').classList.add('active');
-                    
-                    const icon = document.getElementById('toggleCamera').querySelector('i');
-                    icon.className = 'fas fa-video';
-                    
-                    if (AppState.localStream) {
-                        stream.getVideoTracks().forEach(track => AppState.localStream.addTrack(track));
-                    }
-                    
-                    // Si hay un peer activo, enviar nuevo stream
-                    if (AppState.peer && AppState.peer.connected) {
-                        AppState.peer.replaceTrack(
-                            AppState.localStream.getVideoTracks()[0],
-                            AppState.localStream.getVideoTracks()[0],
-                            AppState.localStream
-                        );
-                    }
-                    
-                    showNotification('Cámara activada', 'success', 1500);
-                } catch (err) {
-                    console.error('Error activando cámara:', err);
-                    showNotification('Error al activar cámara', 'error', 3000);
-                }
-            }
-        }
-
-        async function flipCamera() {
-            if (!AppState.settings.cameraEnabled) return;
-            
-            AppState.settings.cameraFacing = AppState.settings.cameraFacing === 'user' ? 'environment' : 'user';
-            
-            // Mostrar mensaje
-            const facing = AppState.settings.cameraFacing === 'user' ? 'frontal' : 'trasera';
-            showNotification(`Cambiando a cámara ${facing}...`, 'info', 1500);
-            
-            // Guardar estado actual
-            const wasEnabled = AppState.settings.cameraEnabled;
-            
-            // Desactivar cámara actual
-            if (AppState.videoStream) {
-                AppState.videoStream.getTracks().forEach(track => track.stop());
-            }
-            
-            // Reactivar con nueva cámara
-            AppState.settings.cameraEnabled = false;
-            setTimeout(() => {
-                toggleCamera();
-            }, 300);
         }
 
         // ========== FINALIZAR LLAMADA ==========
@@ -2664,13 +1613,7 @@
             // Detener timer
             stopTimer();
             
-            // Detener interface updates
-            if (AppState.interfaceUpdateInterval) {
-                clearInterval(AppState.interfaceUpdateInterval);
-                AppState.interfaceUpdateInterval = null;
-            }
-            
-            // Limpiar timeout de llamada
+            // Limpiar timeout
             if (AppState.callTimeout) {
                 clearTimeout(AppState.callTimeout);
                 AppState.callTimeout = null;
@@ -2678,44 +1621,33 @@
             
             // Notificar al otro usuario
             if (AppState.currentCall.peerId) {
-                WebSocketManager.send('call_end', { targetId: AppState.currentCall.peerId });
+                WebSocketManager.send('call_end', { 
+                    callId: AppState.currentCall.callId 
+                });
             }
             
-            // Destruir peer WebRTC
+            // Destruir peer
             if (AppState.peer) {
                 AppState.peer.destroy();
                 AppState.peer = null;
             }
             
-            // Detener streams locales
+            // Detener stream local
             if (AppState.localStream) {
                 AppState.localStream.getTracks().forEach(track => track.stop());
                 AppState.localStream = null;
             }
             
-            if (AppState.videoStream) {
-                AppState.videoStream.getTracks().forEach(track => track.stop());
-                AppState.videoStream = null;
-            }
-            
-            // Limpiar elementos de video/audio
-            const remoteVideo = document.getElementById('remoteVideo');
+            // Limpiar audio remoto
             const remoteAudio = document.getElementById('remoteAudio');
-            const localPreview = document.getElementById('localVideoPreview');
-            
-            remoteVideo.srcObject = null;
             remoteAudio.srcObject = null;
-            localPreview.srcObject = null;
             
-            // Ocultar elementos de llamada
+            // Ocultar overlay
             document.getElementById('callOverlay').classList.remove('active');
-            document.getElementById('videoPreview').classList.remove('active');
-            document.getElementById('videoContainer').classList.remove('active');
-            document.getElementById('callControls').classList.remove('active');
             document.getElementById('incomingControls').classList.remove('active');
-            document.getElementById('flipCamera').classList.remove('active');
+            document.getElementById('callControls').classList.remove('hidden');
             
-            // Resetear estado de llamada
+            // Resetear estado
             AppState.currentCall = { 
                 peerId: '', 
                 peerName: '', 
@@ -2723,123 +1655,16 @@
                 isActive: false, 
                 isInitiator: false,
                 startTime: null,
-                connected: false
+                connected: false,
+                callId: ''
             };
             
             // Resetear controles
-            document.getElementById('toggleCamera').innerHTML = '<i class="fas fa-video-slash"></i>';
             document.getElementById('toggleMic').innerHTML = '<i class="fas fa-microphone"></i>';
             document.getElementById('toggleMic').classList.remove('mic-off');
-            document.getElementById('toggleCamera').classList.remove('camera-off');
-            
-            AppState.settings.cameraEnabled = false;
             AppState.settings.micEnabled = true;
             
             console.log('✅ Llamada finalizada');
-        }
-
-        // ========== SONIDO DE LLAMADA ==========
-        function playIncomingCallSound() {
-            // Crear audio context para sonido de llamada
-            try {
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-                oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.5);
-                
-                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
-                
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 1);
-                
-                // Repetir cada 3 segundos
-                AppState.callSoundInterval = setInterval(() => {
-                    if (document.getElementById('callOverlay').classList.contains('active') && 
-                        document.getElementById('incomingControls').classList.contains('active')) {
-                        playIncomingCallSound();
-                    } else {
-                        clearInterval(AppState.callSoundInterval);
-                    }
-                }, 3000);
-            } catch (e) {
-                console.warn('No se pudo reproducir sonido de llamada:', e);
-            }
-        }
-
-        // ========== PWA INSTALL PROMPT ==========
-        function setupPWA() {
-            let deferredPrompt;
-            
-            window.addEventListener('beforeinstallprompt', (e) => {
-                console.log('✅ beforeinstallprompt event fired');
-                
-                // Prevenir el prompt automático
-                e.preventDefault();
-                deferredPrompt = e;
-                
-                // Mostrar nuestro prompt personalizado después de 10 segundos
-                setTimeout(() => {
-                    showInstallPrompt();
-                }, 10000);
-            });
-            
-            window.addEventListener('appinstalled', () => {
-                console.log('🎉 PWA instalado');
-                localStorage.setItem('pwa_installed', 'true');
-                document.getElementById('installPrompt').classList.remove('show');
-                showNotification('Aplicación instalada correctamente', 'success', 3000);
-            });
-            
-            // Verificar si ya está instalado
-            if (window.matchMedia('(display-mode: standalone)').matches) {
-                console.log('📱 Running in standalone mode');
-                document.documentElement.classList.add('standalone');
-            }
-            
-            // Verificar si el navegador soporta PWA
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('/service-worker.js')
-                    .then(registration => {
-                        console.log('✅ Service Worker registrado:', registration.scope);
-                    })
-                    .catch(error => {
-                        console.log('❌ Error registrando Service Worker:', error);
-                    });
-            }
-        }
-
-        function showInstallPrompt() {
-            // Verificar si ya mostramos el prompt o si ya está instalado
-            if (localStorage.getItem('install_prompt_shown') === 'true' || 
-                localStorage.getItem('pwa_installed') === 'true') {
-                return;
-            }
-            
-            const prompt = document.getElementById('installPrompt');
-            prompt.classList.add('show');
-            
-            localStorage.setItem('install_prompt_shown', 'true');
-            
-            // Configurar botones
-            document.getElementById('installBtn').addEventListener('click', async () => {
-                if (deferredPrompt) {
-                    deferredPrompt.prompt();
-                    const { outcome } = await deferredPrompt.userChoice;
-                    console.log(`User response: ${outcome}`);
-                    deferredPrompt = null;
-                }
-                prompt.classList.remove('show');
-            });
-            
-            document.getElementById('dismissInstall').addEventListener('click', () => {
-                prompt.classList.remove('show');
-            });
         }
 
         // ========== CARGA DE PERFIL ==========
@@ -2849,11 +1674,8 @@
             const token = localStorage.getItem('webrtc_session_token');
             const savedUser = localStorage.getItem('webrtc_user');
             
-            console.log('Token en localStorage:', token ? '✅ PRESENTE' : '❌ AUSENTE');
-            console.log('Usuario en localStorage:', savedUser ? '✅ PRESENTE' : '❌ AUSENTE');
-            
             if (!token || !savedUser) {
-                console.log('❌ No hay sesión activa, redirigiendo a login...');
+                console.log('❌ No hay sesión activa');
                 window.location.href = '/';
                 return;
             }
@@ -2865,76 +1687,40 @@
                 AppState.profilePhoto = userData.avatar_url;
                 AppState.sessionToken = token;
                 
-                console.log('✅ Perfil cargado:', {
-                    username: AppState.username,
-                    userId: AppState.userId,
-                    hasAvatar: !!AppState.profilePhoto
-                });
+                console.log('✅ Perfil cargado:', AppState.username);
                 
-                // Actualizar interfaz inmediatamente
+                // Actualizar interfaz
                 updateAvatarDisplay();
-                document.getElementById('myStatusIndicator').classList.add('offline');
                 
-                // Conectar WebSocket después de un breve delay
+                // Conectar WebSocket
                 setTimeout(() => {
                     WebSocketManager.connect();
                 }, 300);
                 
             } catch (error) {
-                console.error('❌ Error al cargar perfil:', error);
+                console.error('❌ Error cargando perfil:', error);
                 localStorage.clear();
                 window.location.href = '/';
             }
         }
 
-        function updateUserStatus() {
-            // Actualizar periódicamente el estado del usuario
-            setInterval(() => {
-                if (AppState.connected) {
-                    WebSocketManager.send('user_online');
-                }
-            }, 60000); // Cada minuto
-        }
-
         // ========== INICIALIZACIÓN ==========
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('🚀 DOM cargado, iniciando aplicación...');
-            
-            // Configurar PWA
-            setupPWA();
+            console.log('🚀 Iniciando aplicación...');
             
             // Configurar event listeners
-            setupEventListeners();
-            
-            // Cargar perfil y conectar
-            loadProfile();
-            
-            // Actualizar estado periódicamente
-            updateUserStatus();
-            
-            console.log('✅ Aplicación inicializada');
-        });
-
-        function setupEventListeners() {
-            // Botones de reconexión
             document.getElementById('retryConnection').addEventListener('click', () => {
-                console.log('🔄 Reintentando conexión...');
                 AppState.reconnectAttempts = 0;
                 document.getElementById('retryButtonContainer').style.display = 'none';
                 WebSocketManager.connect();
             });
 
             document.getElementById('goToLogin').addEventListener('click', () => {
-                console.log('🔙 Volviendo a login...');
                 localStorage.clear();
-                fetch('/api/logout').finally(() => {
-                    window.location.href = '/';
-                });
+                window.location.href = '/';
             });
 
-            // Avatar y perfil
             document.getElementById('myAvatarContainer').addEventListener('click', () => {
-                console.log('👤 Abriendo perfil...');
                 document.getElementById('profileModal').classList.add('active');
             });
             
@@ -2942,35 +1728,26 @@
                 document.getElementById('profileModal').classList.remove('active');
             });
             
-            // Cambiar foto de perfil
-            document.getElementById('changePhotoBtn').addEventListener('click', () => {
-                document.getElementById('profilePhotoInput').click();
-            });
-            
-            document.getElementById('profilePhotoInput').addEventListener('change', handleProfilePhotoChange);
-            
             // Controles de llamada
             document.getElementById('endCall').addEventListener('click', endCall);
             document.getElementById('toggleMic').addEventListener('click', toggleMic);
-            document.getElementById('toggleCamera').addEventListener('click', toggleCamera);
-            document.getElementById('flipCamera').addEventListener('click', flipCamera);
             
             // Llamadas entrantes
             document.getElementById('rejectCall').addEventListener('click', () => {
-                console.log('❌ Rechazando llamada...');
-                WebSocketManager.send('call_decline', { callerId: AppState.currentCall.peerId });
+                WebSocketManager.send('call_decline', { 
+                    callId: AppState.currentCall.callId 
+                });
                 endCall();
             });
             
             document.getElementById('acceptCall').addEventListener('click', () => {
-                console.log('✅ Aceptando llamada...');
                 document.getElementById('incomingControls').classList.remove('active');
                 document.getElementById('callStatusText').textContent = 'Conectando...';
-                document.getElementById('callStatusText').classList.add('connecting');
                 
-                WebSocketManager.send('call_accept', { callerId: AppState.currentCall.peerId });
+                WebSocketManager.send('call_accept', { 
+                    callId: AppState.currentCall.callId 
+                });
                 
-                // Iniciar WebRTC
                 setTimeout(() => {
                     WebRTCManager.start(false);
                 }, 500);
@@ -2978,18 +1755,13 @@
             
             // Cerrar sesión
             document.getElementById('logoutBtn').addEventListener('click', () => {
-                console.log('🚪 Cerrando sesión...');
                 localStorage.clear();
-                fetch('/api/logout')
-                    .then(() => {
-                        window.location.href = '/';
-                    })
-                    .catch(() => {
-                        window.location.href = '/';
-                    });
+                fetch('/api/logout').finally(() => {
+                    window.location.href = '/';
+                });
             });
             
-            // Toggle password visibility
+            // Toggle password
             document.querySelectorAll('.toggle-password-btn').forEach(button => {
                 button.addEventListener('click', (e) => {
                     const targetId = e.currentTarget.dataset.target;
@@ -3006,113 +1778,23 @@
                 });
             });
             
-            // Guardar perfil
-            document.getElementById('saveProfileBtn').addEventListener('click', saveProfile);
-            
-            // Input changes en perfil
+            // Cambios en perfil
             document.getElementById('profileNameInput').addEventListener('input', () => {
                 const saveBtn = document.getElementById('saveProfileBtn');
                 const name = document.getElementById('profileNameInput').value.trim();
                 saveBtn.disabled = name.length < 3 || name === AppState.username;
             });
             
-            console.log('✅ Event listeners configurados');
-        }
+            // Cargar perfil
+            loadProfile();
+            
+            console.log('✅ Aplicación lista');
+        });
 
-        async function handleProfilePhotoChange(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            
-            if (!file.type.startsWith('image/')) {
-                showNotification('Por favor, selecciona una imagen válida', 'error');
-                return;
-            }
-            
-            if (file.size > 5 * 1024 * 1024) { // 5MB
-                showNotification('La imagen es demasiado grande (máximo 5MB)', 'error');
-                return;
-            }
-            
-            try {
-                const reader = new FileReader();
-                reader.onload = async (e) => {
-                    const base64Image = e.target.result;
-                    
-                    // Mostrar preview
-                    const profileAvatar = document.getElementById('profileAvatarImg');
-                    profileAvatar.src = base64Image;
-                    profileAvatar.style.display = 'block';
-                    document.getElementById('profileAvatarPlaceholder').style.display = 'none';
-                    
-                    // Aquí deberías enviar la imagen al servidor para guardarla
-                    showNotification('Foto de perfil actualizada (localmente)', 'success');
-                    
-                    // Nota: Necesitarías implementar un endpoint en el servidor para guardar la foto
-                    // await uploadProfilePhoto(base64Image);
-                };
-                reader.readAsDataURL(file);
-            } catch (error) {
-                console.error('Error procesando imagen:', error);
-                showNotification('Error al procesar la imagen', 'error');
-            }
-        }
-
-        async function saveProfile() {
-            const name = document.getElementById('profileNameInput').value.trim();
-            const currentPassword = document.getElementById('profileCurrentPassword').value;
-            const newPassword = document.getElementById('profileNewPassword').value;
-            const confirmPassword = document.getElementById('profileConfirmPassword').value;
-            
-            if (name.length < 3) {
-                showNotification('El nombre debe tener al menos 3 caracteres', 'error');
-                return;
-            }
-            
-            if (newPassword && newPassword !== confirmPassword) {
-                showNotification('Las contraseñas no coinciden', 'error');
-                return;
-            }
-            
-            if (newPassword && newPassword.length < 6) {
-                showNotification('La nueva contraseña debe tener al menos 6 caracteres', 'error');
-                return;
-            }
-            
-            if (newPassword && !currentPassword) {
-                showNotification('Necesitas tu contraseña actual para cambiarla', 'error');
-                return;
-            }
-            
-            // Aquí implementarías la llamada al servidor para actualizar el perfil
-            try {
-                // Simulación de actualización
-                showNotification('Actualizando perfil...', 'info');
-                
-                // Simular delay de red
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
-                // Actualizar estado local
-                AppState.username = name;
-                updateAvatarDisplay();
-                
-                // Limpiar campos de contraseña
-                document.getElementById('profileCurrentPassword').value = '';
-                document.getElementById('profileNewPassword').value = '';
-                document.getElementById('profileConfirmPassword').value = '';
-                document.getElementById('saveProfileBtn').disabled = true;
-                
-                showNotification('Perfil actualizado correctamente', 'success');
-                
-            } catch (error) {
-                console.error('Error actualizando perfil:', error);
-                showNotification('Error al actualizar el perfil', 'error');
-            }
-        }
-
-        // ========== MANEJO DE CONEXIÓN/ DESCONEXIÓN ==========
+        // ========== MANEJO DE CONEXIÓN ==========
         window.addEventListener('online', () => {
-            console.log('🌐 Conexión a internet restablecida');
-            showNotification('Conectado a internet', 'success', 2000);
+            console.log('🌐 Conexión restablecida');
+            showNotification('Conectado', 2000);
             
             if (!AppState.connected) {
                 WebSocketManager.connect();
@@ -3120,334 +1802,25 @@
         });
 
         window.addEventListener('offline', () => {
-            console.log('🌐 Sin conexión a internet');
-            showNotification('Sin conexión a internet', 'error', 5000);
-            WebSocketManager.updateConnectionStatus('disconnected', 'Sin conexión');
+            console.log('🌐 Sin conexión');
+            showNotification('Sin conexión', 5000);
+            updateConnectionStatus('disconnected', 'Sin conexión');
         });
-
-        // Prevenir salida accidental
-        window.addEventListener('beforeunload', (e) => {
-            if (AppState.currentCall.isActive) {
-                e.preventDefault();
-                e.returnValue = 'Tienes una llamada en curso. ¿Seguro que quieres salir?';
-            }
-        });
-
-                // ========== RESTANTE DEL CÓDIGO ==========
-        
-        // Actualizar periodicamente la interfaz
-        setInterval(() => {
-            if (AppState.connected) {
-                // Actualizar indicador de conexión
-                const timeSinceLastPong = Date.now() - AppState.lastPong;
-                if (timeSinceLastPong > 15000 && timeSinceLastPong < 30000) {
-                    WebSocketManager.updateConnectionStatus('warning', 'Conexión débil');
-                }
-            }
-        }, 5000);
-        
-        // ========== MANEJO DE ERRORES GLOBALES ==========
-        window.addEventListener('error', (event) => {
-            console.error('Error global capturado:', event.error);
-        });
-        
-        window.addEventListener('unhandledrejection', (event) => {
-            console.error('Promesa rechazada no manejada:', event.reason);
-        });
-        
-        // ========== UTILIDADES ADICIONALES ==========
-        function updateInterfaceOnConnectionChange() {
-            // Actualizar estado visual de la conexión
-            const statusIndicator = document.getElementById('myStatusIndicator');
-            
-            if (AppState.connected) {
-                statusIndicator.classList.remove('offline');
-                statusIndicator.classList.remove('connecting');
-            } else if (AppState.reconnectAttempts > 0) {
-                statusIndicator.classList.add('connecting');
-                statusIndicator.classList.remove('offline');
-            } else {
-                statusIndicator.classList.add('offline');
-                statusIndicator.classList.remove('connecting');
-            }
-        }
-        
-        // ========== TEST DE CONECTIVIDAD ==========
-        async function testMediaDevices() {
-            try {
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                console.log('📱 Dispositivos disponibles:', devices);
-                
-                // Verificar permisos
-                const permissions = await navigator.permissions.query({ name: 'microphone' });
-                console.log('Permiso de micrófono:', permissions.state);
-                
-                const cameraPermission = await navigator.permissions.query({ name: 'camera' });
-                console.log('Permiso de cámara:', cameraPermission.state);
-                
-                return {
-                    hasMicrophone: devices.some(d => d.kind === 'audioinput'),
-                    hasCamera: devices.some(d => d.kind === 'videoinput'),
-                    microphonePermission: permissions.state,
-                    cameraPermission: cameraPermission.state
-                };
-            } catch (error) {
-                console.error('Error probando dispositivos:', error);
-                return null;
-            }
-        }
-        
-        // Ejecutar test al inicio
-        setTimeout(() => {
-            testMediaDevices().then(result => {
-                if (result) {
-                    console.log('✅ Test de dispositivos completado:', result);
-                    if (!result.hasMicrophone) {
-                        showNotification('No se detectó micrófono. Las llamadas de audio no funcionarán.', 'warning', 5000);
-                    }
-                    if (!result.hasCamera) {
-                        showNotification('No se detectó cámara. Las videollamadas no funcionarán.', 'warning', 5000);
-                    }
-                }
-            });
-        }, 3000);
-        
-        // ========== MANEJO DE VENTANA VISIBLE/OCULTA ==========
-        let isPageVisible = true;
-        
-        document.addEventListener('visibilitychange', () => {
-            isPageVisible = !document.hidden;
-            
-            if (isPageVisible) {
-                console.log('👁️ Página visible');
-                if (AppState.currentCall.isActive) {
-                    // Reanudar streams si estaban pausados
-                    if (AppState.localStream) {
-                        AppState.localStream.getTracks().forEach(track => {
-                            if (track.readyState === 'live') {
-                                track.enabled = true;
-                            }
-                        });
-                    }
-                }
-                
-                // Reconectar WebSocket si está desconectado
-                if (!AppState.connected) {
-                    WebSocketManager.connect();
-                }
-            } else {
-                console.log('👁️‍🗨️ Página oculta');
-                // Podríamos pausar streams para ahorrar recursos
-            }
-        });
-        
-        // ========== MANEJO DE ORIENTACIÓN ==========
-        function handleOrientationChange() {
-            const isPortrait = window.innerHeight > window.innerWidth;
-            console.log('📱 Orientación:', isPortrait ? 'vertical' : 'horizontal');
-            
-            // Ajustar interfaz según orientación
-            if (isPortrait) {
-                document.documentElement.classList.add('portrait');
-                document.documentElement.classList.remove('landscape');
-            } else {
-                document.documentElement.classList.add('landscape');
-                document.documentElement.classList.remove('portrait');
-                
-                // En landscape, ajustar vista previa
-                if (AppState.settings.cameraEnabled) {
-                    const preview = document.getElementById('videoPreview');
-                    preview.style.top = '20px';
-                    preview.style.right = '20px';
-                }
-            }
-        }
-        
-        window.addEventListener('resize', debounce(handleOrientationChange, 250));
-        window.addEventListener('orientationchange', handleOrientationChange);
-        
-        // Verificar orientación inicial
-        setTimeout(handleOrientationChange, 100);
-        
-        // ========== MEJORA DE EXPERIENCIA TÁCTIL ==========
-        document.addEventListener('touchstart', () => {}, { passive: true });
-        
-        // Prevenir zoom en iOS
-        document.addEventListener('gesturestart', (e) => {
-            e.preventDefault();
-        });
-        
-        // ========== LOCAL STORAGE SYNC ==========
-        function syncLocalStorage() {
-            try {
-                // Guardar estado importante
-                const userData = {
-                    id: AppState.userId,
-                    username: AppState.username,
-                    avatar_url: AppState.profilePhoto
-                };
-                
-                localStorage.setItem('webrtc_user', JSON.stringify(userData));
-                
-                // Guardar preferencias
-                const preferences = {
-                    cameraEnabled: AppState.settings.cameraEnabled,
-                    micEnabled: AppState.settings.micEnabled,
-                    cameraFacing: AppState.settings.cameraFacing
-                };
-                
-                localStorage.setItem('webrtc_preferences', JSON.stringify(preferences));
-                
-            } catch (error) {
-                console.warn('Error sincronizando localStorage:', error);
-            }
-        }
-        
-        // Sincronizar periódicamente
-        setInterval(syncLocalStorage, 30000);
-        
-        // Sincronizar al cerrar
-        window.addEventListener('beforeunload', syncLocalStorage);
-        
-        // ========== MEJORA DE RENDIMIENTO ==========
-        function optimizePerformance() {
-            // Reducir animaciones en dispositivos lentos
-            const isSlowDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            
-            if (isSlowDevice) {
-                console.log('📱 Dispositivo móvil detectado, optimizando...');
-                document.documentElement.classList.add('mobile');
-                
-                // Reducir efectos visuales
-                const style = document.createElement('style');
-                style.textContent = `
-                    .mobile * {
-                        transition-duration: 0.15s !important;
-                        animation-duration: 0.15s !important;
-                    }
-                    .mobile .spinner {
-                        animation-duration: 1.5s !important;
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-        }
-        
-        // Ejecutar optimizaciones
-        setTimeout(optimizePerformance, 1000);
-        
-        // ========== COMPROBACIÓN DE COMPATIBILIDAD ==========
-        function checkCompatibility() {
-            const compatibility = {
-                webrtc: !!window.RTCPeerConnection,
-                websocket: !!window.WebSocket,
-                mediadevices: !!navigator.mediaDevices && !!navigator.mediaDevices.getUserMedia,
-                webaudio: !!window.AudioContext || !!window.webkitAudioContext,
-                serviceworker: 'serviceWorker' in navigator,
-                localstorage: !!window.localStorage
-            };
-            
-            console.log('🔍 Compatibilidad:', compatibility);
-            
-            // Alertar sobre incompatibilidades críticas
-            if (!compatibility.webrtc) {
-                showNotification('Tu navegador no soporta WebRTC. La aplicación no funcionará.', 'error', 10000);
-            }
-            
-            if (!compatibility.websocket) {
-                showNotification('Tu navegador no soporta WebSockets. La aplicación no funcionará.', 'error', 10000);
-            }
-            
-            return compatibility;
-        }
-        
-        // Verificar compatibilidad al inicio
-        setTimeout(() => {
-            const compat = checkCompatibility();
-            
-            if (!compat.webrtc || !compat.websocket) {
-                document.getElementById('loadingText').textContent = 
-                    'Navegador no compatible. Por favor, usa Chrome, Firefox o Safari actualizado.';
-                document.getElementById('retryButtonContainer').style.display = 'flex';
-            }
-        }, 2000);
-        
-        // ========== ANALÍTICAS Y LOGS ==========
-        function logEvent(eventName, data = {}) {
-            const event = {
-                timestamp: new Date().toISOString(),
-                event: eventName,
-                userId: AppState.userId,
-                ...data
-            };
-            
-            console.log('📊 Evento:', event);
-            
-            // Aquí podrías enviar a un servicio de analíticas
-            // sendAnalytics(event);
-        }
-        
-        // Registrar eventos importantes
-        ['click', 'call_started', 'call_ended', 'user_connected', 'user_disconnected'].forEach(event => {
-            // Los manejadores individuales ya registran estos eventos
-        });
-        
-        // ========== EXPORTAR FUNCIONES PARA DEBUG ==========
-        // Solo en desarrollo
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            window.debugApp = {
-                state: AppState,
-                reconnect: () => WebSocketManager.connect(),
-                testCall: () => {
-                    if (AppState.users.length > 0 && AppState.users[0].id !== AppState.userId) {
-                        handleUserClick({ currentTarget: document.querySelector('.user-item:not(.disabled)') });
-                    }
-                },
-                endCall,
-                showNotification,
-                testMediaDevices
-            };
-            
-            console.log('🔧 Modo debug activado. Usa window.debugApp');
-        }
-        
-        console.log('🎉 Aplicación completamente inicializada y lista');
     </script>
     
-    <!-- Registrar Service Worker -->
+    <!-- Service Worker -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/service-worker.js')
-                    .then(registration => {
-                        console.log('✅ Service Worker registrado:', registration.scope);
+                    .then(() => {
+                        console.log('✅ Service Worker registrado');
                     })
                     .catch(error => {
                         console.log('❌ Error registrando Service Worker:', error);
                     });
             });
         }
-        
-        // Detectar si la app está instalada como PWA
-        window.addEventListener('DOMContentLoaded', () => {
-            if (window.matchMedia('(display-mode: standalone)').matches) {
-                console.log('📱 Ejecutando como PWA instalada');
-                document.documentElement.classList.add('pwa-installed');
-            }
-            
-            // Verificar si estamos en iOS
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-            if (isIOS) {
-                console.log('🍎 Dispositivo iOS detectado');
-                document.documentElement.classList.add('ios');
-                
-                // Soluciones específicas para iOS
-                const metaViewport = document.querySelector('meta[name="viewport"]');
-                if (metaViewport) {
-                    metaViewport.content = metaViewport.content + ', viewport-fit=cover';
-                }
-            }
-        });
     </script>
 </body>
 </html>
